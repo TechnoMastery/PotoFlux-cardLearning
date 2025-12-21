@@ -5,30 +5,26 @@ import net.minheur.potoflux.loader.PotoFluxLoadingContext;
 import net.minheur.potoflux.loader.mod.Mod;
 import net.minheur.potoflux.loader.mod.ModEventBus;
 import net.minheur.potoflux.loader.mod.events.RegisterLangEvent;
-import net.minheur.potoflux.loader.mod.events.RegisterTabsEvent;
 import your.packagename.tabs.Tabs;
-import your.packagename.translations.ExampleModTranslations;
+import your.packagename.translations.CardLearningTranslations;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@Mod(modId = ExampleMod.MOD_ID)
-public class ExampleMod {
-    public static final String MOD_ID = "yourmodid";
+@Mod(modId = CardLearningMod.MOD_ID)
+public class CardLearningMod {
+    public static final String MOD_ID = "card_learning";
 
-    public ExampleMod() {
+    public CardLearningMod() {
         ModEventBus modEventBus = PotoFluxLoadingContext.get().getModEventBus();
 
-        modEventBus.addListener(RegisterTabsEvent.class, this::onRegisterTabs);
-        modEventBus.addListener(RegisterLangEvent.class, this::onRegisterLang);
+        modEventBus.addListener(Tabs::register);
+        modEventBus.addListener(this::onRegisterLang);
     }
 
-    private void onRegisterTabs(RegisterTabsEvent event) {
-        Tabs.register(event.reg);
-    }
     private void onRegisterLang(RegisterLangEvent event) {
-        event.registerLang(new ExampleModTranslations());
+        event.registerLang(new CardLearningTranslations());
     }
 
     public static Path getModDir() {

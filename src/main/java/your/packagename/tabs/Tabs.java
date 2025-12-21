@@ -1,12 +1,12 @@
 package your.packagename.tabs;
 
-import net.minheur.potoflux.registry.IRegistry;
+import net.minheur.potoflux.loader.mod.events.RegisterTabsEvent;
 import net.minheur.potoflux.registry.RegistryList;
 import net.minheur.potoflux.screen.tabs.Tab;
 import net.minheur.potoflux.translations.Translations;
 import net.minheur.potoflux.utils.ressourcelocation.ResourceLocation;
-import your.packagename.ExampleMod;
-import your.packagename.tabs.all.YourTabClass;
+import your.packagename.CardLearningMod;
+import your.packagename.tabs.all.CardLearningTab;
 
 public class Tabs {
     private final RegistryList<Tab> LIST = new RegistryList<>();
@@ -20,10 +20,10 @@ public class Tabs {
     }
 
     // example tab
-    public final Tab MY_TAB = LIST.add(new Tab(new ResourceLocation(ExampleMod.MOD_ID, "your_tab_id"), Translations.get("yourmodid:tabs.yourTab.name"), YourTabClass.class));
+        public final Tab CARD_LEARNING = LIST.add(new Tab(new ResourceLocation(CardLearningMod.MOD_ID, "card_learning"), Translations.get("card_learning:tabs.cardLearn.name"), CardLearningTab.class));
 
-    public static void register(IRegistry<Tab> reg) {
+    public static void register(RegisterTabsEvent event) {
         INSTANCE = new Tabs();
-        INSTANCE.LIST.register(reg);
+        INSTANCE.LIST.register(event.reg);
     }
 }
