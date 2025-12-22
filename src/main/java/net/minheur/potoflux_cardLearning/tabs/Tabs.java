@@ -1,12 +1,12 @@
-package your.packagename.tabs;
+package net.minheur.potoflux_cardLearning.tabs;
 
 import net.minheur.potoflux.loader.mod.events.RegisterTabsEvent;
 import net.minheur.potoflux.registry.RegistryList;
 import net.minheur.potoflux.screen.tabs.Tab;
 import net.minheur.potoflux.translations.Translations;
 import net.minheur.potoflux.utils.ressourcelocation.ResourceLocation;
-import your.packagename.CardLearningMod;
-import your.packagename.tabs.all.CardLearningTab;
+import net.minheur.potoflux_cardLearning.CardLearningMod;
+import net.minheur.potoflux_cardLearning.tabs.all.CardLearningTab;
 
 public class Tabs {
     private final RegistryList<Tab> LIST = new RegistryList<>();

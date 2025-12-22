@@ -1,12 +1,12 @@
-package your.packagename;
+package net.minheur.potoflux_cardLearning;
 
 import net.minheur.potoflux.PotoFlux;
 import net.minheur.potoflux.loader.PotoFluxLoadingContext;
 import net.minheur.potoflux.loader.mod.Mod;
 import net.minheur.potoflux.loader.mod.ModEventBus;
 import net.minheur.potoflux.loader.mod.events.RegisterLangEvent;
-import your.packagename.tabs.Tabs;
-import your.packagename.translations.CardLearningTranslations;
+import net.minheur.potoflux_cardLearning.tabs.Tabs;
+import net.minheur.potoflux_cardLearning.translations.CardLearningTranslations;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,7 +1,7 @@
-package your.packagename.translations;
+package net.minheur.potoflux_cardLearning.translations;
 
 import net.minheur.potoflux.translations.AbstractTranslationsRegistry;
-import your.packagename.CardLearningMod;
+import net.minheur.potoflux_cardLearning.CardLearningMod;
 
 public class CardLearningTranslations extends AbstractTranslationsRegistry {
     public CardLearningTranslations() {
