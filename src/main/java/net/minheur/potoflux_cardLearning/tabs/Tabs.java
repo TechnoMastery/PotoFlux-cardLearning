@@ -20,7 +20,7 @@ public class Tabs {
     }
 
     // example tab
-        public final Tab CARD_LEARNING = LIST.add(new Tab(new ResourceLocation(CardLearningMod.MOD_ID, "card_learning"), Translations.get("card_learning:tabs.cardLearn.name"), CardLearningTab.class));
+        public final Tab CARD_LEARNING = LIST.add(new Tab(new ResourceLocation(CardLearningMod.MOD_ID, "card_learning"), Translations.get("card_learning:tabs.card.name"), CardLearningTab.class));
 
     public static void register(RegisterTabsEvent event) {
         INSTANCE = new Tabs();
