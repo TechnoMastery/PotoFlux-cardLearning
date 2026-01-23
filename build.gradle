@@ -17,7 +17,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     // PotoFlux
-    implementation name: 'PotoFlux-5.14'
+    implementation name: 'PotoFlux-6.0'
 
     // PotoFlux dependencies
     implementation 'com.google.code.gson:gson:2.11.0'
@@ -31,6 +31,9 @@ test {
 tasks.register("run", JavaExec) {
     group = "potoflux"
     description = "Run PotoFlux"
+
     classpath = sourceSets.main.runtimeClasspath
     mainClass.set("net.minheur.potoflux.PotoFlux")
+
+    args("devEnv")
 }
