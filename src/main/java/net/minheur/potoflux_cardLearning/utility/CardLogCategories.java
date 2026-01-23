@@ -1,6 +1,6 @@
 package net.minheur.potoflux_cardLearning.utility;
 
-import net.minheur.potoflux.utils.logger.ILogCategory;
+import net.minheur.potoflux.logger.ILogCategory;
 
 public enum CardLogCategories implements ILogCategory {
     CARDS("cardLearning");

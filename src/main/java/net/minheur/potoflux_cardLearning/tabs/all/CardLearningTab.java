@@ -2,14 +2,12 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
-import net.minheur.potoflux.PotoFlux;
-import net.minheur.potoflux.utils.logger.LogCategories;
+import net.minheur.potoflux.logger.PtfLogger;
 import net.minheur.potoflux_cardLearning.utility.Card;
 import net.minheur.potoflux_cardLearning.utility.CardJsonManager;
 import net.minheur.potoflux_cardLearning.utility.CardList;
 import net.minheur.potoflux.screen.tabs.BaseTab;
 import net.minheur.potoflux.translations.Translations;
-import net.minheur.potoflux.utils.logger.PtfLogger;
 import net.minheur.potoflux_cardLearning.CardLearningMod;
 import net.minheur.potoflux_cardLearning.utility.CardLogCategories;
 

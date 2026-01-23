@@ -2,7 +2,7 @@ package net.minheur.potoflux_cardLearning.utility;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minheur.potoflux.utils.logger.PtfLogger;
+import net.minheur.potoflux.logger.PtfLogger;
 
 import java.util.ArrayList;
 import java.util.Collections;
