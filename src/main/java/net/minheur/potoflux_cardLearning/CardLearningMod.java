@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-@Mod(modId = CardLearningMod.MOD_ID, version = "2.0", compatibleVersions = {"6.2"})
+@Mod(modId = CardLearningMod.MOD_ID, version = "2.1", compatibleVersions = {"6.3"})
 public class CardLearningMod {
     public static final String MOD_ID = "card_learning";
 

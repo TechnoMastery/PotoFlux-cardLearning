@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'net.minheur.potoflux_card_learning'
-version = '2.0'
+version = '2.1'
 
 repositories {
     mavenCentral()
