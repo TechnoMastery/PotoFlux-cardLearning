@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@Mod(modId = CardLearningMod.MOD_ID, version = "2.0", compatibleVersions = {"6.1"})
+@Mod(modId = CardLearningMod.MOD_ID, version = "2.0", compatibleVersions = {"6.2"})
 public class CardLearningMod {
     public static final String MOD_ID = "card_learning";
 
