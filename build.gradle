@@ -37,7 +37,7 @@ jar {
 }
 
 processResources {
-    filesMatching("version.properties") {
+    filesMatching("modVersion.properties") {
         expand "version": version
     }
 }
@@ -48,7 +48,7 @@ tasks.register("generateVersionProperties") {
 
     doLast {
         outputDir.mkdirs()
-        def file = new File(outputDir, "version.properties")
+        def file = new File(outputDir, "modVersion.properties")
         file.text = "version=${project.version}"
     }
 }
