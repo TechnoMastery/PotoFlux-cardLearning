@@ -33,7 +33,7 @@ public class CardJsonManager {
             Card c = new Card();
 
             // randomize the main & secondary, if asked
-            boolean reverse = Math.random() < 0.5 || randomized;
+            boolean reverse = randomized && Math.random() < 0.5;
             c.main = j.get(reverse ? "secondary" : "main").getAsString();
             c.secondary = j.get(reverse ? "main" : "secondary").getAsString();
 
