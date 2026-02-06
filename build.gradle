@@ -17,7 +17,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     // PotoFlux
-    implementation name: 'PotoFlux-6.3'
+    implementation name: 'PotoFlux-6.5'
 
     // PotoFlux dependencies
     implementation 'com.google.code.gson:gson:2.11.0'
