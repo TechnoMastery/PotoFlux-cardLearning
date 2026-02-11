@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-@Mod(modId = CardLearningMod.MOD_ID, version = "2.3", compatibleVersionUrl = "https://technomastery.github.io/PotoFluxAppData/ptfVersion/cardLearningVersion.json")
+@Mod(modId = CardLearningMod.MOD_ID, version = "2.4", compatibleVersionUrl = "https://technomastery.github.io/PotoFluxAppData/ptfVersion/cardLearningVersion.json")
 public class CardLearningMod {
     public static final String MOD_ID = "card_learning";
 
