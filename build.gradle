@@ -61,7 +61,7 @@ processResources {
     }
 }
 
-tasks.register("generateVersionProperties") {
+tasks.register("generateModVersionProperties") {
     def outputDir = file("$buildDir/generated/resources")
     outputs.dir outputDir
 
@@ -74,10 +74,16 @@ tasks.register("generateVersionProperties") {
 
 sourceSets.main.resources.srcDir("$buildDir/generated/resources")
 
-tasks.processResources.dependsOn(generateVersionProperties);
+tasks.processResources.dependsOn(generateModVersionProperties);
 
 test {
     useJUnitPlatform()
+}
+
+tasks.named("sourcesJar") {
+    dependsOn(generateModVersionProperties)
+
+    exclude("**/*.json", "**/*.toml", "**/*.lang")
 }
 
 tasks.register("run", JavaExec) {
