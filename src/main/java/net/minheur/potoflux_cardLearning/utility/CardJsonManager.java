@@ -58,7 +58,7 @@ public class CardJsonManager {
         list.name = name;
         list.cards = cardsArray;
 
-        PtfLogger.info("List " + name + " has successfully been loaded !");
+        PtfLogger.info("List " + name + " has successfully been loaded !", CardLogCategories.CARDS);
 
         return list;
     }
