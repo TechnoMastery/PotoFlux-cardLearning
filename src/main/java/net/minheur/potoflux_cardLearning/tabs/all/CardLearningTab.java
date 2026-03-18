@@ -45,6 +45,10 @@ public class CardLearningTab extends BaseTab {
         allComboBox.add(mainComboBox);
         allComboBox.add(modifyComboBox);
 
+        exportComboBox.setName("Export box");
+        mainComboBox.setName("Main box");
+        modifyComboBox.setName("Modify box");
+
         checkAndCreateDir();
 
         // create sub-tabs
@@ -519,9 +523,9 @@ public class CardLearningTab extends BaseTab {
             for (File file : jsonFiles) {
                 String name = file.getName().replace(".json", "");
                 box.addItem(name);
-                PtfLogger.info("Added " + name + " to " + box.getName(), CardLogCategories.CARDS, "export");
+                PtfLogger.info("Added " + name + " to " + box.getName(), CardLogCategories.CARDS, "reloadBox");
             }
-        } else PtfLogger.error("Can't get the list of lists !", CardLogCategories.CARDS, "export");
+        } else PtfLogger.error("Can't get the list of lists !", CardLogCategories.CARDS, "reloadBox");
     }
 
     private JPanel createLoadPanel() {
