@@ -742,11 +742,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    @Override
-    protected boolean invokeLater() {
-        return true;
-    }
-
     private JPanel createCreatePanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
