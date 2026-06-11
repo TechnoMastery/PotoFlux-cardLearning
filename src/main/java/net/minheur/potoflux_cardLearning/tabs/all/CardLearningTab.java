@@ -49,13 +49,13 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private Button validateLoadButton;
 
     // create
-    private ListView<GridPane> createdCardsGrid;
+    private ListView<HBox> createdCardsGrid;
     private List<Card> createdCardList;
     private Button saveCreatedCards;
     private TextField createdListName;
 
     // all vars shared between methods
-    private ListView<GridPane> listPanel = new ListView<>();
+    private ListView<HBox> listPanel = new ListView<>();
 
     private final String defaultComboSelected = Translations.get("common:select_list");
     private ComboBox<String> exportComboBox = new ComboBox<>();
@@ -295,12 +295,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         loadListPanel();
 
-        // scrollable
-        ScrollPane scrollPane = new ScrollPane(listPanel);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
-        panel.setCenter(scrollPane);
+        panel.setCenter(listPanel);
         return panel;
     }
 
@@ -312,9 +307,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         if (jsonFiles == null || jsonFiles.length == 0) {
             PtfLogger.info("No lists found !", CardLogCategories.CARDS, "list");
 
-            GridPane fallbackGrid = new GridPane();
-            fallbackGrid.add(new Label(Translations.get("card_learning:tabs.card.list.no_found")), 0, 0);
-            listPanel.getItems().add(fallbackGrid);
+            listPanel.getItems().add(new HBox(new Label(Translations.get("card_learning:tabs.card.list.no_found"))));
 
         } else {
             for (File file : jsonFiles) try {
@@ -328,12 +321,11 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 }
 
                 // create line for list
-                GridPane row = new GridPane();
+                HBox row = new HBox(5);
 
                 // left - text
                 Label label = new Label(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")");
                 label.setFont(new Font("Segeo UI", 14));
-                row.add(label, 0, 0);
 
                 // right - buttons
                 Button deleteButton = new Button(Translations.get("common:delete"));
@@ -342,8 +334,14 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 deleteButton.setOnAction(e -> deleteList(file, list));
                 infoButton.setOnAction(e -> displayListDetails(list));
 
-                row.add(deleteButton, 2, 0);
-                row.add(infoButton, 1, 0);
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                row.getChildren().addAll(
+                        label,
+                        spacer,
+                        infoButton, deleteButton
+                );
 
                 listPanel.getItems().add(row);
             } catch (Exception e) {
@@ -464,7 +462,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 return;
             }
 
-            ListView<GridPane> items = createCardPanel(list);
+            ListView<HBox> items = createCardPanel(list);
             cardScroll.setCenter(items);
             exportButton.setDisable(false); // export button is now available
         } catch (Exception ex) {
@@ -681,14 +679,13 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         else PtfLogger.warning("Can't clear a null panel !", CardLogCategories.CARDS, "load");
     }
 
-    private ListView<GridPane> createCardPanel(CardList list) {
-        ListView<GridPane> allCards = new ListView<>();
+    private ListView<HBox> createCardPanel(CardList list) {
+        ListView<HBox> allCards = new ListView<>();
         Region spacer = new Region();
-        spacer.setMinHeight(10);
-        spacer.setPrefHeight(10);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         for (Card card : list.cards) {
-            GridPane grid = new GridPane();
+            HBox row = new HBox(5);
 
             Label left = new Label(card.main);
             Label right = new Label(card.secondary);
@@ -696,11 +693,11 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             left.setFont(new Font("Segoe UI", 14));
             right.setFont(new Font("Segoe UI", 14));
 
-            grid.add(left, 0, 0);
-            grid.add(spacer, 1, 0);
-            grid.add(right, 2, 0);
+            row.getChildren().addAll(
+                    left, spacer, right
+            );
 
-            allCards.getItems().add(grid);
+            allCards.getItems().add(row);
         }
 
         return allCards;
@@ -750,12 +747,9 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         // center - added cards
         createdCardsGrid = new ListView<>();
-        ScrollPane scrollPane = new ScrollPane(createdCardsGrid);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
         panel.setTop(topPanel);
-        panel.setCenter(scrollPane);
+        panel.setCenter(createdCardsGrid);
 
         modifyButton.setOnAction(e -> modifyListIntoCreateZone());
         addCardButton.setOnAction(e -> addCardIntoCreatedList());
@@ -949,23 +943,18 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         PtfLogger.info("Refreshing cards...", CardLogCategories.CARDS, "create");
         createdCardsGrid.getItems().clear();
 
-        if (createdCardList.isEmpty()) {
-            GridPane fallback = new GridPane();
-            fallback.add(new Label(Translations.get("card_learning:tabs.card.no_card")), 0, 0);
-            createdCardsGrid.getItems().add(fallback);
-        } // no item fallback
+        if (createdCardList.isEmpty())
+            createdCardsGrid.getItems().add(new HBox(new Label(Translations.get("card_learning:tabs.card.no_card")))); // no item fallback
+
         else for (Card card : createdCardList) {
 
-            GridPane row = new GridPane();
+            HBox row = new HBox(5);
 
             Label left = new Label(card.main);
             Label right = new Label(card.secondary);
 
             left.setFont(new Font("Segoe UI", 14));
             right.setFont(new Font("Segoe UI", 14));
-
-            row.add(left, 0, 0);
-            row.add(right, 1, 0);
 
             // delete button
             Button deleteButton = new Button("✕");
@@ -974,8 +963,14 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 refreshCreatedCards();
             });
 
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            row.add(deleteButton, 2, 0);
+            row.getChildren().addAll(
+                    left, right,
+                    spacer,
+                    deleteButton
+            );
 
             createdCardsGrid.getItems().add(row);
         }
