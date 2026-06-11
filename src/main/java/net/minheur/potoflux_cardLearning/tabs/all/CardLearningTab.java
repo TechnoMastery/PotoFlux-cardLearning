@@ -52,11 +52,17 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private ScrollPane loadedCardsDisplay;
     private Button validateLoadButton;
 
+    // create
+    private ListView<GridPane> createdCardsGrid;
+    private final List<Card> createdCardList = new ArrayList<>();
+    private Button saveCreatedCards;
+    private final TextField createdListName = new TextField();
+
     // all vars shared between methods
     private final ListView<GridPane> listPanel = new ListView<>();
     private final ComboBox<String> exportComboBox = new ComboBox<>();
     private final ComboBox<String> mainComboBox = new ComboBox<>();
-    private final JComboBox<String> modifyComboBox = new JComboBox<>();
+    private final ComboBox<String> modifyComboBox = new ComboBox<>();
     private final List<JComboBox<String>> allComboBox = new ArrayList<>();
 
     @Override
@@ -76,7 +82,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         // exportComboBox.setName("Export box"); // todo
         // mainComboBox.setName("Main box"); // todo
-        modifyComboBox.setName("Modify box"); // todo
+        // modifyComboBox.setName("Modify box"); // todo
 
         // TODO: mk selection models
 
@@ -726,277 +732,257 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    private JPanel createCreatePanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // temp data
-        final List<Card> tempCards = new ArrayList<>();
-        final JTextField nameField = new JTextField(20);
+    private BorderPane createCreatePanel() {
+        BorderPane panel = new BorderPane();
 
         // up - name + button
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        JButton addCardButton = new JButton(Translations.get("card_learning:tabs.card.add_card"));
-        JButton saveButton = new JButton(Translations.get("common:validate"));
-        JButton cancelButton = new JButton(Translations.get("common:cancel"));
-        JButton modifyButton = new JButton(Translations.get("common:modify"));
-        saveButton.setEnabled(false);
+        HBox topPanel = new HBox(10);
+        Button addCardButton = new Button(Translations.get("card_learning:tabs.card.add_card"));
+        saveCreatedCards = new Button(Translations.get("common:validate"));
+        Button cancelButton = new Button(Translations.get("common:cancel"));
+        Button modifyButton = new Button(Translations.get("common:modify"));
+        saveCreatedCards.setDisable(true);
 
-        topPanel.add(new JLabel(Translations.get("card_learning:tabs.card.list.name")));
-        topPanel.add(nameField);
-        topPanel.add(addCardButton);
-        topPanel.add(saveButton);
-        topPanel.add(cancelButton);
-        topPanel.add(modifyButton);
+        topPanel.getChildren().addAll(
+                new Label(Translations.get("card_learning:tabs.card.list.name")),
+                createdListName,
+                addCardButton, saveCreatedCards,
+                cancelButton, modifyButton
+        );
 
         // center - added cards
-        JPanel cardsPanel = new JPanel();
-        cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-        JScrollPane scrollPane = new JScrollPane(cardsPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        createdCardsGrid = new ListView<>();
+        ScrollPane scrollPane = new ScrollPane(createdCardsGrid);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
-        panel.add(topPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.setTop(topPanel);
+        panel.setCenter(scrollPane);
 
-        // display features
-        Runnable[] refreshCards = new Runnable[1];
-
-        refreshCards[0] = () -> {
-            PtfLogger.info("Refreshing cards...", CardLogCategories.CARDS, "create");
-            cardsPanel.removeAll();
-
-            if (tempCards.isEmpty()) cardsPanel.add(new JLabel(Translations.get("card_learning:tabs.card.no_card"), SwingConstants.CENTER));
-            else for (Card card : tempCards) {
-                JPanel row = new JPanel(new GridLayout(1, 2, 5, 5));
-                row.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true));
-
-                JPanel content = new JPanel(new GridLayout(1, 2, 5, 5));
-                JLabel left = new JLabel(card.main, SwingConstants.CENTER);
-                JLabel right = new JLabel(card.secondary, SwingConstants.CENTER);
-
-                left.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                right.setFont(new Font("Segoe UI", Font.BOLD, 14));
-
-                content.add(left);
-                content.add(right);
-
-                // delete button
-                JButton deleteButton = new JButton("✕");
-                deleteButton.addActionListener(e -> {
-                    tempCards.remove(card);
-                    refreshCards[0].run();
-                });
-
-                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-                buttonPanel.add(deleteButton);
-
-                row.add(content, BorderLayout.CENTER);
-                row.add(buttonPanel, BorderLayout.EAST);
-
-                cardsPanel.add(row);
-            }
-
-            cardsPanel.revalidate();
-            cardsPanel.repaint();
-            saveButton.setEnabled(!tempCards.isEmpty() && getCheckedListName(nameField.getText()) != null);
-        };
-
-        modifyButton.addActionListener(e -> {
-            if (!tempCards.isEmpty()) {
-                int reset = JOptionPane.showConfirmDialog(
-                        panel, Translations.get("card_learning:tabs.card.override"),
-                        Translations.get("common:override_check"),
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
-                );
-                if (reset != JOptionPane.YES_OPTION) {
-                    PtfLogger.info("Reset all cards", CardLogCategories.CARDS, "create");
-                    return;
-                }
-            }
-
-            refreshComboBox();
-            tempCards.clear();
-
-            // def
-            JPanel comboPanel = new JPanel(new BorderLayout(50, 400));
-            JLabel label = new JLabel(Translations.get("card_learning:tabs.card.choose_list"));
-            comboPanel.add(label, BorderLayout.WEST);
-            comboPanel.add(modifyComboBox, BorderLayout.EAST);
-
-            JOptionPane.showMessageDialog(
-                    panel, comboPanel,
-                    Translations.get("card_learning:tabs.card.choose_list"),
-                    JOptionPane.QUESTION_MESSAGE
-            );
-
-            String selected = (String) modifyComboBox.getSelectedItem();
-            if (selected == null || selected.equals(Translations.get("common:select_list"))) {
-                PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(
-                        panel, Translations.get("card_learning:tabs.card.no_selected"),
-                        Translations.get("common:error"),
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            Path filePath = cardsDir.resolve(selected + ".json");
-            if (!Files.exists(filePath)) {
-                PtfLogger.error("Can't modify unexisting list !", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("file:error.not_found.linked") + selected, Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            try {
-                String content = Files.readString(filePath);
-                CardList cardList = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
-
-                for (Card c : cardList.cards) {
-                    if (c == null || c.main == null || c.secondary == null) {
-                        PtfLogger.error("Trying to modify an invalid list !", CardLogCategories.CARDS, "create");
-                        JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.list.invalid"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    tempCards.add(c);
-                }
-
-                if (tempCards.isEmpty() || cardList.name == null) {
-                    PtfLogger.error("Trying to modify an invalid list !", CardLogCategories.CARDS, "create");
-                    JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.list.invalid"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                nameField.setText(cardList.name.replaceAll("\"", ""));
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                PtfLogger.error("failed to read file", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("common:read_error") + ex.getMessage(), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            refreshCards[0].run();
-
-        });
-
-        // button "add card"
-        addCardButton.addActionListener(e -> {
-            JTextField mainField = new JTextField();
-            JTextField secondaryField = new JTextField();
-
-            JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-            inputPanel.add(new JLabel(Translations.get("card_learning:tabs.card.face.front")));
-            inputPanel.add(mainField);
-            inputPanel.add(new JLabel(Translations.get("card_learning:tabs.card.face.back")));
-            inputPanel.add(secondaryField);
-
-            int result = JOptionPane.showConfirmDialog(
-                    panel, inputPanel, Translations.get("card_learning:tabs.card.new"),
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (result == JOptionPane.OK_OPTION) {
-                String main = removeProhibitedChar(mainField.getText());
-                String secondary = removeProhibitedChar(secondaryField.getText());
-
-                if (main.isEmpty() || secondary.isEmpty()) {
-                    PtfLogger.warning("User wanted to add empty card !", CardLogCategories.CARDS, "create");
-                    JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.new.empty"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                Card c = new Card();
-                c.main = main;
-                c.secondary = secondary;
-
-                tempCards.add(c);
-                refreshCards[0].run();
-            }
-        });
-
-        // button validate (save)
-        saveButton.addActionListener(e -> {
-            String listName = getCheckedListName(nameField.getText());
-            if (listName == null) {
-                PtfLogger.warning("User wants to export a list, but has no name !", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.list.invalid.name"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            if (tempCards.isEmpty()) {
-                PtfLogger.warning("User wants to expoty a list, but has no cards !", "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("common:nothing_save"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            String fileName = listName.replaceAll(" ", "_") + ".json";
-            Path outputFile = cardsDir.resolve(fileName);
-            if (Files.exists(outputFile)) {
-                PtfLogger.warning("A file named " + fileName + " already exists ! Asking override...", CardLogCategories.CARDS, "create");
-                int overwrite = JOptionPane.showConfirmDialog(panel,
-                        Translations.get("card_learning:tabs.card.replace.content"),
-                        Translations.get("file:error.exist"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (overwrite == JOptionPane.YES_OPTION) PtfLogger.info("User accepted override for " + fileName, CardLogCategories.CARDS, "create");
-                else {
-                    PtfLogger.info("User refused override for " + fileName, CardLogCategories.CARDS, "create");
-                    return;
-                }
-            }
-
-            CardList list = new CardList();
-            list.name = listName;
-            list.cards = new ArrayList<>(tempCards);
-
-            try {
-                Gson gson = new Gson();
-                Files.writeString(outputFile, gson.toJson(list));
-                PtfLogger.info("List " + listName + " has been saved !", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.list.saved"), Translations.get("common:saveSuccess"), JOptionPane.INFORMATION_MESSAGE);
-
-                tempCards.clear();
-                nameField.setText("");
-                refreshCards[0].run();
-                loadListPanel(); // refresh global list
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Error while saving list !", CardLogCategories.CARDS, "create");
-                JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.error.saving") + ex.getMessage(), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        // button cancel
-        cancelButton.addActionListener(e -> {
-            if (tempCards.isEmpty() && nameField.getText().isEmpty()) {
-                PtfLogger.warning("Can't cancel empty list !", CardLogCategories.CARDS, "create");
-                return;
-            }
-
-            int confirm = JOptionPane.showConfirmDialog(panel,
-                    Translations.get("card_learning:tabs.card.cancel_all"),
-                    Translations.get("common:confirm"),
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                PtfLogger.info("Canceled list.", CardLogCategories.CARDS, "create");
-                tempCards.clear();
-                nameField.setText("");
-                refreshCards[0].run();
-            }
-        });
+        modifyButton.setOnAction(e -> modifyListIntoCreateZone());
+        addCardButton.setOnAction(e -> addCardIntoCreatedList());
+        saveCreatedCards.setOnAction(e -> saveCreatedList());
+        cancelButton.setOnAction(e -> clearCreatedCards());
 
         // auto run validate button check
-        nameField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { refreshCards[0].run(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { refreshCards[0].run(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { refreshCards[0].run(); }
-        });
+        createdListName.textProperty().addListener((observable, oldValue, newValue) -> refreshCreatedCards());
 
-        refreshCards[0].run();
+        refreshCreatedCards();
         return panel;
+    }
+
+    private void clearCreatedCards() {
+        if (createdCardList.isEmpty() && createdListName.getText().isEmpty()) {
+            PtfLogger.warning("Can't cancel empty list !", CardLogCategories.CARDS, "create");
+            return;
+        }
+
+        boolean confirmed = UiUtils.showConfirmationDialog(Translations.get("card_learning:tabs.card.cancel_all"));
+
+        if (confirmed) {
+            PtfLogger.info("Canceled list.", CardLogCategories.CARDS, "create");
+            createdCardList.clear();
+            createdListName.setText("");
+            refreshCreatedCards();
+        }
+    }
+    private void saveCreatedList() {
+        String listName = getCheckedListName(createdListName.getText());
+
+        if (listName == null) {
+            PtfLogger.warning("User wants to export a list, but has no name !", CardLogCategories.CARDS, "create");
+            UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.list.invalid.name"));
+            return;
+        }
+
+        if (createdCardList.isEmpty()) {
+            PtfLogger.warning("User wants to expoty a list, but has no cards !", "create");
+            UiUtils.showErrorPane(Translations.get("common:nothing_save"));
+            return;
+        }
+
+        String fileName = listName.replace(" ", "_") + ".json";
+        Path outputFile = cardsDir.resolve(fileName);
+
+        if (Files.exists(outputFile)) {
+            PtfLogger.warning("A file named " + fileName + " already exists ! Asking override...", CardLogCategories.CARDS, "create");
+
+            boolean confirmed = UiUtils.showConfirmationDialog(
+                    new Label(Translations.get("card_learning:tabs.card.replace.content")),
+                    Translations.get("file:error.exist")
+            );
+
+            if (confirmed) PtfLogger.info("User accepted override for " + fileName, CardLogCategories.CARDS, "create");
+            else {
+                PtfLogger.info("User refused override for " + fileName, CardLogCategories.CARDS, "create");
+                return;
+            }
+
+        }
+
+        CardList list = new CardList();
+        list.name = listName;
+        list.cards = new ArrayList<>(createdCardList);
+
+        try {
+            Gson gson = new Gson();
+            Files.writeString(outputFile, gson.toJson(list));
+            PtfLogger.info("List " + listName + " has been saved !", CardLogCategories.CARDS, "create");
+            UiUtils.showMessagePane(Translations.get("card_learning:tabs.card.list.saved"));
+
+            createdCardList.clear();
+            createdListName.setText("");
+            refreshCreatedCards();
+            loadListPanel(); // refresh global list
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Error while saving list !", CardLogCategories.CARDS, "create");
+            UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.error.saving") + ex.getMessage());
+        }
+    }
+    private void addCardIntoCreatedList() {
+        TextField mainField = new TextField();
+        TextField secondaryField = new TextField();
+
+        GridPane inputPanel = new GridPane();
+        inputPanel.add(new Label(Translations.get("card_learning:tabs.card.face.front")), 0, 0);
+        inputPanel.add(mainField, 1, 0);
+        inputPanel.add(new Label(Translations.get("card_learning:tabs.card.face.back")), 0, 1);
+        inputPanel.add(secondaryField, 1, 1);
+
+        boolean confirmed = UiUtils.showConfirmationDialog(
+                inputPanel,
+                Translations.get("card_learning:tabs.card.new")
+        );
+
+        if (confirmed) {
+            String main = removeProhibitedChar(mainField.getText());
+            String secondary = removeProhibitedChar(secondaryField.getText());
+
+            if (main.isEmpty() || secondary.isEmpty()) {
+                PtfLogger.warning("User wanted to add empty card !", CardLogCategories.CARDS, "create");
+                UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.new.empty"));
+                return;
+            }
+
+            Card c = new Card();
+            c.main = main;
+            c.secondary = secondary;
+
+            createdCardList.add(c);
+            refreshCreatedCards();
+        }
+    }
+    private void modifyListIntoCreateZone() {
+        if (!createdCardList.isEmpty()) {
+            boolean reset = UiUtils.showConfirmationDialog(
+                    new Label(Translations.get("card_learning:tabs.card.override")),
+                    Translations.get("common:override_check")
+            );
+            if (!reset) {
+                PtfLogger.info("Reset all cards", CardLogCategories.CARDS, "create");
+                return;
+            }
+        }
+
+        refreshComboBox();
+        createdCardList.clear();
+
+        // def
+        HBox comboPanel = new HBox();
+        Label label = new Label(Translations.get("card_learning:tabs.card.choose_list"));
+        comboPanel.getChildren().addAll(
+                label, modifyComboBox
+        );
+
+        UiUtils.showConfirmationDialog(comboPanel, Translations.get("card_learning:tabs.card.choose_list"));
+        String selected = modifyComboBox.getSelectionModel().getSelectedItem();
+
+        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+            PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "create");
+            UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.no_selected"));
+            return;
+        }
+
+        Path filePath = cardsDir.resolve(selected + ".json");
+        if (!Files.exists(filePath)) {
+            PtfLogger.error("Can't modify unexisting list !", CardLogCategories.CARDS, "create");
+            UiUtils.showErrorPane(Translations.get("file:error.not_found.linked") + selected);
+            return;
+        }
+
+        try {
+            String content = Files.readString(filePath);
+            CardList cardList = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
+
+            if (cardList == null) {
+                PtfLogger.error("Trying to modify an invalid list !", CardLogCategories.CARDS, "create");
+                UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.list.invalid"));
+                return;
+            }
+
+            for (Card c : cardList.cards) {
+                if (c == null || c.main == null || c.secondary == null) {
+                    PtfLogger.error("Trying to modify an invalid list !", CardLogCategories.CARDS, "create");
+                    UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.list.invalid"));
+                    return;
+                }
+                createdCardList.add(c);
+            }
+
+            if (createdCardList.isEmpty() || cardList.name == null) {
+                PtfLogger.error("Trying to modify an invalid list !", CardLogCategories.CARDS, "create");
+                UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.list.invalid"));
+                return;
+            }
+
+            createdListName.setText(cardList.name.replace("\"", ""));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("failed to read file", CardLogCategories.CARDS, "create");
+            UiUtils.showErrorPane(Translations.get("common:read_error") + ex.getMessage());
+            return;
+        }
+
+        refreshCreatedCards();
+    }
+
+    private void refreshCreatedCards() {
+        PtfLogger.info("Refreshing cards...", CardLogCategories.CARDS, "create");
+        createdCardsGrid.getItems().clear();
+
+        if (createdCardList.isEmpty()) {
+            GridPane fallback = new GridPane();
+            fallback.add(new Label(Translations.get("card_learning:tabs.card.no_card")), 0, 0);
+            createdCardsGrid.getItems().add(fallback);
+        } // no item fallback
+        else for (Card card : createdCardList) {
+
+            GridPane row = new GridPane();
+
+            Label left = new Label(card.main);
+            Label right = new Label(card.secondary);
+
+            left.setFont(new Font("Segoe UI", 14));
+            right.setFont(new Font("Segoe UI", 14));
+
+            row.add(left, 0, 0);
+            row.add(right, 1, 0);
+
+            // delete button
+            Button deleteButton = new Button("✕");
+            deleteButton.setOnAction(e -> {
+                createdCardList.remove(card);
+                refreshCreatedCards();
+            });
+
+
+            row.add(deleteButton, 2, 0);
+
+            createdCardsGrid.getItems().add(row);
+        }
+
+        saveCreatedCards.setDisable(createdCardList.isEmpty() && getCheckedListName(createdListName.getText()) == null);
     }
 
     @Override
