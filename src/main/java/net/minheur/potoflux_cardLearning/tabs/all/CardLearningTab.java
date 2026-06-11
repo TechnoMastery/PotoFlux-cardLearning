@@ -8,6 +8,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
+import net.minheur.potoflux.PotoFlux;
 import net.minheur.potoflux.logger.PtfLogger;
 import net.minheur.potoflux.ui.UiUtils;
 import net.minheur.potoflux_cardLearning.utility.Card;
@@ -47,7 +49,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     // all vars shared between methods
     private final ListView<GridPane> listPanel = new ListView<>();
-    private final JComboBox<String> exportComboBox = new JComboBox<>();
+    private final ComboBox<String> exportComboBox = new ComboBox<>();
     private final ComboBox<String> mainComboBox = new ComboBox<>();
     private final JComboBox<String> modifyComboBox = new JComboBox<>();
     private final List<JComboBox<String>> allComboBox = new ArrayList<>();
@@ -67,7 +69,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         allComboBox.add(mainComboBox);
         allComboBox.add(modifyComboBox);
 
-        exportComboBox.setName("Export box"); // todo
+        // exportComboBox.setName("Export box"); // todo
         // mainComboBox.setName("Main box"); // todo
         modifyComboBox.setName("Modify box"); // todo
 
@@ -373,148 +375,143 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    private JPanel createExportPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private BorderPane createExportPanel() {
+        BorderPane panel = new BorderPane();
+
+        // UP - title + select list + button
+        HBox topPanel = new HBox(5);
 
         // title
-        JLabel title = new JLabel(Translations.get("card_learning:tabs.card.export"), SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        panel.add(title, BorderLayout.NORTH);
+        Label title = new Label(Translations.get("card_learning:tabs.card.export"));
+        title.setFont(new Font("Segoe UI", 16));
 
-        // up - select list 6 button
-        JPanel topPanel = new JPanel(new BorderLayout(5, 0));
-        // list
-        refreshComboBox(); // adding .json files
+        refreshComboBox(); // adding .json files -- random, why here ?
+
         // export button
-        JButton exportButton = new JButton(Translations.get("common:export"));
-        exportButton.setEnabled(false);
+        Button exportButton = new Button(Translations.get("common:export"));
+        exportButton.setDisable(true);
 
-        exportButton.addActionListener(e -> {
-            String selected = (String) exportComboBox.getSelectedItem();
-            if (selected == null || selected.equals(Translations.get("common:select_list"))) {
-                PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
-                return;
-            }
-            PtfLogger.info("User wants to export: " + selected, CardLogCategories.CARDS, "export");
+        exportButton.setOnAction(e -> exportList());
 
-            Path sourcePath = cardsDir.resolve(selected + ".json");
-            if (!Files.exists(sourcePath)) {
-                PtfLogger.error("Can't find file '" + selected + "' !", CardLogCategories.CARDS, "export");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("file:error.not_found.linked") + sourcePath,
-                        Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        topPanel.getChildren().addAll(
+                title,
+                exportComboBox,
+                exportButton
+        );
 
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle(Translations.get("card_learning:tabs.card.export") + selected);
-            chooser.setSelectedFile(new File(selected + ".json"));
-
-            // ONLY json
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(Translations.get("file:json"), "json");
-            chooser.setFileFilter(filter);
-            chooser.setAcceptAllFileFilterUsed(false);
-
-            int userSelection = chooser.showSaveDialog(PANEL);
-            if (userSelection != JFileChooser.APPROVE_OPTION) {
-                PtfLogger.info("User canceled export: " + selected, CardLogCategories.CARDS, "export");
-                return;
-            }
-
-            File destinationFile = chooser.getSelectedFile();
-            if (!destinationFile.getName().toLowerCase().endsWith(".json")) {
-                destinationFile = new File(destinationFile.getAbsolutePath() + ".json"); // force file to be json
-                PtfLogger.warning("User wanted to export as other than JSON ! Forced...", CardLogCategories.CARDS, "export");
-            }
-
-            // check if existing
-            if (destinationFile.exists()) {
-                int overwrite = JOptionPane.showConfirmDialog(PANEL,
-                        Translations.get("card_learning:tabs.card.replace.content"),
-                        Translations.get("card_learning:tabs.card.replace.name"),
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (overwrite != JOptionPane.YES_OPTION) {
-                    PtfLogger.info("User canceled export: " + selected + " because it would override", CardLogCategories.CARDS, "export");
-                    return;
-                }
-            }
-
-            try {
-                Files.copy(sourcePath, destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                PtfLogger.info("List '"  + selected + "' exported successfully in: " + destinationFile, CardLogCategories.CARDS, "export");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("card_learning:tabs.card.export.done") + "\n" + destinationFile.getAbsolutePath(),
-                        Translations.get("card_learning:tabs.card.export.done.name"), JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Failed to copy list '" + selected + "' in: " + destinationFile, CardLogCategories.CARDS, "export");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("card_learning.tabs.card.export.error") + ex.getMessage(),
-                        Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        topPanel.add(exportComboBox, BorderLayout.CENTER);
-        topPanel.add(exportButton, BorderLayout.EAST);
-
-        // center content
-        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         // display cards
-        JPanel cardsPanel = new JPanel(new BorderLayout());
-        JScrollPane scrollPane = new JScrollPane();
-        cardsPanel.add(scrollPane, BorderLayout.CENTER);
-
-        centerPanel.add(topPanel, BorderLayout.NORTH);
-        centerPanel.add(cardsPanel, BorderLayout.CENTER);
-
-        panel.add(centerPanel, BorderLayout.CENTER);
+        ScrollPane cardScroll = new ScrollPane();
+        cardScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        cardScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
         // behaviour
-        exportComboBox.addActionListener(e -> {
-            String selected = (String) exportComboBox.getSelectedItem();
-
-            // null check
-            if (selected == null || selected.equals(Translations.get("common:select_list"))) {
-                scrollPane.setViewportView(null);
-                exportButton.setEnabled(false);
-                PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
-                return;
-            }
-
-            // existing file check
-            Path filePath = cardsDir.resolve(selected + ".json");
-            if (!Files.exists(filePath)) {
-                scrollPane.setViewportView(new JLabel(Translations.get("file:error.not_found"), SwingConstants.CENTER));
-                exportButton.setEnabled(false);
-                PtfLogger.error("File not found: " + selected, CardLogCategories.CARDS, "export");
-                return;
-            }
-
-            try {
-                String content = Files.readString(filePath);
-                CardList list = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
-
-                // null check
-                if (list == null || list.cards == null) {
-                    scrollPane.setViewportView(new JLabel(Translations.get("potoflux:tabs.card.error.loading_list"), SwingConstants.CENTER));
-                    exportButton.setEnabled(false);
-                    PtfLogger.error("List can't be null: " + selected, CardLogCategories.CARDS, "export");
-                    return;
-                }
-
-                JScrollPane cardsScroll = createCardPanelAsScroll(list);
-                scrollPane.setViewportView(cardsScroll.getViewport().getView());
-                exportButton.setEnabled(true); // export button is now available
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Error while exporting: " + selected, CardLogCategories.CARDS, "export");
-                scrollPane.setViewportView(new JLabel(Translations.get("card_learning:tabs.card.error.reading_file"), SwingConstants.CENTER));
-                exportButton.setEnabled(false);
-            }
-        });
+        exportComboBox.setOnAction(e -> reloadExportDisplayedList(cardScroll, exportButton));
 
         return panel;
+    }
+
+    private void reloadExportDisplayedList(ScrollPane cardScroll, Button exportButton) {
+        String selected = exportComboBox.getSelectionModel().getSelectedItem();
+
+        // null check
+        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+            cardScroll.setContent(null);
+            exportButton.setDisable(true);
+            PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
+            return;
+        }
+
+        // existing file check
+        Path filePath = cardsDir.resolve(selected + ".json");
+        if (!Files.exists(filePath)) {
+            cardScroll.setContent(new Label(Translations.get("file:error.not_found")));
+            exportButton.setDisable(true);
+            PtfLogger.error("File not found: " + selected, CardLogCategories.CARDS, "export");
+            return;
+        }
+
+        try {
+            String content = Files.readString(filePath);
+            CardList list = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
+
+            // null check
+            if (list == null || list.cards == null) {
+                cardScroll.setContent(new Label(Translations.get("potoflux:tabs.card.error.loading_list")));
+                exportButton.setDisable(true);
+                PtfLogger.error("List can't be null: " + selected, CardLogCategories.CARDS, "export");
+                return;
+            }
+
+            ListView<GridPane> items = createCardPanel(list);
+            cardScroll.setContent(items);
+            exportButton.setDisable(false); // export button is now available
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Error while exporting: " + selected, CardLogCategories.CARDS, "export");
+            cardScroll.setContent(new Label(Translations.get("card_learning:tabs.card.error.reading_file")));
+            exportButton.setDisable(true);
+        }
+    }
+    private void exportList() {
+        String selected = exportComboBox.getSelectionModel().getSelectedItem();
+
+        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+            PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
+            return;
+        }
+        PtfLogger.info("User wants to export: " + selected, CardLogCategories.CARDS, "export");
+
+        Path sourcePath = cardsDir.resolve(selected + ".json");
+        if (!Files.exists(sourcePath)) {
+            PtfLogger.error("Can't find file '" + selected + "' !", CardLogCategories.CARDS, "export");
+            UiUtils.showErrorPane(Translations.get("file:error.not_found.linked") + sourcePath);
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(Translations.get("card_learning:tabs.card.export") + selected);
+        chooser.setTitle(selected + ".json");
+
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "JSON files (*.json)",
+                        "*.json"
+                )
+        );
+
+        File destinationFile = chooser.showSaveDialog(PotoFlux.app.getStage());
+
+        if (destinationFile == null) {
+            PtfLogger.info("User canceled export: " + selected, CardLogCategories.CARDS, "export");
+            return;
+        }
+
+        if (!destinationFile.getName().toLowerCase().endsWith(".json")) {
+            destinationFile = new File(destinationFile.getAbsolutePath() + ".json"); // force file to be json
+            PtfLogger.warning("User wanted to export as other than JSON ! Forced...", CardLogCategories.CARDS, "export");
+        }
+
+        // check if existing
+        if (destinationFile.exists()) {
+            boolean overwrite = UiUtils.showConfirmationDialog(
+                    new Label(Translations.get("card_learning:tabs.card.replace.content")),
+                    Translations.get("card_learning:tabs.card.replace.name")
+            );
+            if (!overwrite) {
+                PtfLogger.info("User canceled export: " + selected + " because it would override", CardLogCategories.CARDS, "export");
+                return;
+            }
+        }
+
+        try {
+            Files.copy(sourcePath, destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            PtfLogger.info("List '"  + selected + "' exported successfully in: " + destinationFile, CardLogCategories.CARDS, "export");
+            UiUtils.showMessagePane(Translations.get("card_learning:tabs.card.export.done") + "\n" + destinationFile.getAbsolutePath());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Failed to copy list '" + selected + "' in: " + destinationFile, CardLogCategories.CARDS, "export");
+            UiUtils.showErrorPane(Translations.get("card_learning.tabs.card.export.error") + ex.getMessage());
+        }
     }
 
     private void refreshComboBox() {
