@@ -87,12 +87,18 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         checkAndCreateDir();
 
         // create sub-tabs
-        subTabs.getTabs().add(new Tab(Translations.get("common:main"), createMainPanel()));
-        subTabs.getTabs().add(new Tab(Translations.get("common:list"), createListPanel()));
-        subTabs.getTabs().add(new Tab(Translations.get("common:load"), createLoadPanel()));
-        subTabs.getTabs().add(new Tab(Translations.get("common:create"), createCreatePanel()));
-        subTabs.getTabs().add(new Tab(Translations.get("common:export"), createExportPanel()));
+        subTabs.getTabs().add(buildTab(Translations.get("common:main"), createMainPanel()));
+        subTabs.getTabs().add(buildTab(Translations.get("common:list"), createListPanel()));
+        subTabs.getTabs().add(buildTab(Translations.get("common:load"), createLoadPanel()));
+        subTabs.getTabs().add(buildTab(Translations.get("common:create"), createCreatePanel()));
+        subTabs.getTabs().add(buildTab(Translations.get("common:export"), createExportPanel()));
 
+    }
+
+    private Tab buildTab(String name, Node content) {
+        Tab t = new Tab(name, content);
+        t.setClosable(false);
+        return t;
     }
 
     private void setupFields() {
