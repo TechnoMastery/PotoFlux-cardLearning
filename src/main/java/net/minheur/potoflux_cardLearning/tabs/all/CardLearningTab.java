@@ -2,10 +2,14 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import net.minheur.potoflux.logger.PtfLogger;
+import net.minheur.potoflux.ui.UiUtils;
 import net.minheur.potoflux_cardLearning.utility.Card;
 import net.minheur.potoflux_cardLearning.utility.CardJsonManager;
 import net.minheur.potoflux_cardLearning.utility.CardList;
@@ -18,7 +22,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,10 +38,17 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     private TabPane subTabs;
 
+    private CardList currentList;
+    private int index;
+    private Label cardLabel;
+    private Button backButton;
+    private Button flipButton;
+    private Button nextButton;
+
     // all vars shared between methods
     private final JPanel listPanel = new JPanel();
     private final JComboBox<String> exportComboBox = new JComboBox<>();
-    private final JComboBox<String> mainComboBox = new JComboBox<>();
+    private final ComboBox<String> mainComboBox = new ComboBox<>();
     private final JComboBox<String> modifyComboBox = new JComboBox<>();
     private final List<JComboBox<String>> allComboBox = new ArrayList<>();
 
@@ -58,8 +68,10 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         allComboBox.add(modifyComboBox);
 
         exportComboBox.setName("Export box"); // todo
-        mainComboBox.setName("Main box"); // todo
+        // mainComboBox.setName("Main box"); // todo
         modifyComboBox.setName("Modify box"); // todo
+
+        // TODO: mk selection models
 
         checkAndCreateDir();
 
@@ -72,174 +84,175 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     }
 
-    private JPanel createMainPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private BorderPane createMainPanel() {
+        BorderPane pane = new BorderPane();
 
-        // top - list selection
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel listLabel = new JLabel(Translations.get("card_learning:tabs.card.list.column"));
-        JButton startButton = new JButton(Translations.get("common:start"));
+        // === TOP - list selection ===
+        HBox topPanel = new HBox();
+        Label listLabel = new Label(Translations.get("card_learning:tabs.card.list.column"));
+        Button startButton = new Button(Translations.get("common:start"));
 
         refreshComboBox();
 
-        topPanel.add(listLabel);
-        topPanel.add(mainComboBox);
-        topPanel.add(startButton);
+        topPanel.getChildren().addAll(
+                listLabel,
+                mainComboBox,
+                startButton
+        );
 
-        panel.add(topPanel, BorderLayout.NORTH);
+        pane.setTop(topPanel);
 
-        // center - cards
-        JPanel cardPanel = new JPanel(new BorderLayout());
-        JLabel cardLabel = new JLabel("", SwingConstants.CENTER);
-        cardLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        cardPanel.add(cardLabel, BorderLayout.CENTER);
-        panel.add(cardPanel, BorderLayout.CENTER);
+        // === CENTER - play ===
+        cardLabel = new Label("");
+        cardLabel.setFont(new Font("Segoe UI", 24));
+        pane.setCenter(cardLabel);
 
         // bottom - buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        JButton backButton = new JButton(Translations.get("common:back"));
-        JButton flipButton = new JButton(Translations.get("common:flip"));
-        JButton nextButton = new JButton(Translations.get("common:next"));
-        backButton.setEnabled(false);
-        flipButton.setEnabled(false);
-        nextButton.setEnabled(false);
-        bottomPanel.add(backButton);
-        bottomPanel.add(flipButton);
-        bottomPanel.add(nextButton);
-        panel.add(bottomPanel, BorderLayout.SOUTH);
+        HBox bottomPanel = new HBox();
+        backButton = new Button(Translations.get("common:back"));
+        flipButton = new Button(Translations.get("common:flip"));
+        nextButton = new Button(Translations.get("common:next"));
+        backButton.setDisable(true);
+        flipButton.setDisable(true);
+        nextButton.setDisable(true);
+        bottomPanel.getChildren().addAll(
+                backButton, flipButton, nextButton
+        );
+        pane.setBottom(bottomPanel);
 
         // quiz data
-        final CardList[] currentList = new CardList[1];
-        final int[] index = {0};
+        currentList = new CardList();
+        index = 0;
 
-        startButton.addActionListener(e -> {
-            String selected = (String) mainComboBox.getSelectedItem();
-            if (selected == null || selected.equals(Translations.get("common:select_list"))) {
-                PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "main");
+        startButton.setOnAction(e -> startQuiz());
+        flipButton.setOnAction(e -> flipCard());
+        nextButton.setOnAction(e -> nextCard());
+        backButton.setOnAction(e -> previousCard());
+
+        return pane;
+    }
+
+    private void previousCard() {
+        if (currentList == null || currentList.cards.isEmpty()) {
+            PtfLogger.error("Empty list, but activated 'back' button !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        // get size
+        int size = currentList.cards.size();
+
+        // list size check
+        if (size == 1) {
+            PtfLogger.warning("List is 1 long but 'back' button enabled !", CardLogCategories.CARDS, "main");
+            backButton.setDisable(true);
+            return;
+        }
+
+        // check for first card
+        if (index <= 0) {
+            backButton.setDisable(true);
+            nextButton.setDisable(false);
+            PtfLogger.warning("'back' button on, but first card is live !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        // decrease index : now preparing next cycle
+        index--;
+
+        // force next button on & update text
+        nextButton.setDisable(false);
+        cardLabel.setText(currentList.cards.get(index).main);
+
+        // disable itself if first card is live & enable next button
+        if (index == 0) backButton.setDisable(true);
+    }
+    private void nextCard() {
+        if (currentList == null || currentList.cards.isEmpty()) {
+            PtfLogger.error("Empty list, but activated 'next' button !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        // get size
+        int size = currentList.cards.size();
+
+        // list size check
+        if (size == 1) {
+            PtfLogger.warning("List is 1 long but 'back' button enabled !", CardLogCategories.CARDS, "main");
+            backButton.setDisable(true);
+            return;
+        }
+
+        // check if last card is live: button wrongly on
+        if (index == size - 1) {
+            nextButton.setDisable(true);
+            backButton.setDisable(false);
+            PtfLogger.warning("'next' button on, but last card is live !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        // increase index by one : now prepare for next cycle
+        index++;
+
+        // force back button on & update text
+        backButton.setDisable(false);
+        cardLabel.setText(currentList.cards.get(index).main);
+
+        // disable itself if last card
+        if (index == size - 1) nextButton.setDisable(true);
+    }
+    private void flipCard() {
+        if (currentList == null || currentList.cards.isEmpty()) {
+            PtfLogger.warning("Empty list, but activated 'flip' button !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        // get current
+        Card card = currentList.cards.get(index);
+
+        // flip
+        if (cardLabel.getText().equals(card.main)) {
+            cardLabel.setText(card.secondary);
+        } else {
+            cardLabel.setText(card.main);
+        }
+    }
+    private void startQuiz() {
+        String selected = mainComboBox.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+            PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "main");
+            return;
+        }
+
+        Path filePath = cardsDir.resolve(selected + ".json");
+        if (!Files.exists(filePath)) {
+            PtfLogger.error("File not found: " + selected, CardLogCategories.CARDS, "main");
+            UiUtils.showErrorPane(Translations.get("file:error.not_found.linked") + selected);
+            return;
+        }
+
+        try {
+            String content = Files.readString(filePath);
+            currentList = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), true);
+            if (currentList == null || currentList.cards == null || currentList.cards.isEmpty()) {
+                PtfLogger.error("List '" + selected + "' is invalid or empty !", CardLogCategories.CARDS, "main");
+                UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.list.invalid"));
                 return;
             }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Can't read file for list '" + selected + "' !", CardLogCategories.CARDS, "main");
+            UiUtils.showErrorPane(Translations.get("common:read_error") + ex.getMessage());
+            return;
+        }
 
-            Path filePath = cardsDir.resolve(selected + ".json");
-            if (!Files.exists(filePath)) {
-                PtfLogger.error("File not found: " + selected, CardLogCategories.CARDS, "main");
-                JOptionPane.showMessageDialog(panel, Translations.get("file:error.not_found.linked") + selected, Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        // reset index
+        index = 0;
+        cardLabel.setText(currentList.cards.get(index).main);
 
-            try {
-                String content = Files.readString(filePath);
-                currentList[0] = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), true);
-                if (currentList[0] == null || currentList[0].cards == null || currentList[0].cards.isEmpty()) {
-                    PtfLogger.error("List '" + selected + "' is invalid or empty !", CardLogCategories.CARDS, "main");
-                    JOptionPane.showMessageDialog(panel, Translations.get("card_learning:tabs.card.list.invalid"), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Can't read file for list '" + selected + "' !", CardLogCategories.CARDS, "main");
-                JOptionPane.showMessageDialog(panel, Translations.get("common:read_error") + ex.getMessage(), Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // reset index
-            index[0] = 0;
-            cardLabel.setText(currentList[0].cards.get(index[0]).main);
-
-            // default states for buttons
-            backButton.setEnabled(false);
-            flipButton.setEnabled(true);
-            nextButton.setEnabled(currentList[0].cards.size() > 1);
-        });
-
-        flipButton.addActionListener(e -> {
-            if (currentList[0] == null || currentList[0].cards.isEmpty()) {
-                PtfLogger.warning("Empty list, but activated 'flip' button !", CardLogCategories.CARDS, "main");
-                return;
-            }
-
-            // get current
-            Card card = currentList[0].cards.get(index[0]);
-
-            // flip
-            if (cardLabel.getText().equals(card.main)) {
-                cardLabel.setText(card.secondary);
-            } else {
-                cardLabel.setText(card.main);
-            }
-        });
-
-        nextButton.addActionListener(e -> {
-            if (currentList[0] == null || currentList[0].cards.isEmpty()) {
-                PtfLogger.error("Empty list, but activated 'next' button !", CardLogCategories.CARDS, "main");
-                return;
-            }
-
-            // get size
-            int size = currentList[0].cards.size();
-
-            // list size check
-            if (size == 1) {
-                PtfLogger.warning("List is 1 long but 'back' button enabled !", CardLogCategories.CARDS, "main");
-                backButton.setEnabled(false);
-                return;
-            }
-
-            // check if last card is live: button wrongly on
-            if (index[0] == size - 1) {
-                nextButton.setEnabled(false);
-                backButton.setEnabled(true);
-                PtfLogger.warning("'next' button on, but last card is live !", CardLogCategories.CARDS, "main");
-                return;
-            }
-
-            // increase index by one : now prepare for next cycle
-            index[0]++;
-
-            // force back button on & update text
-            backButton.setEnabled(true);
-            cardLabel.setText(currentList[0].cards.get(index[0]).main);
-
-            // disable itself if last card
-            if (index[0] == size - 1) nextButton.setEnabled(false);
-        });
-
-        backButton.addActionListener(e -> {
-            if (currentList[0] == null || currentList[0].cards.isEmpty()) {
-                PtfLogger.error("Empty list, but activated 'back' button !", CardLogCategories.CARDS, "main");
-                return;
-            }
-
-            // get size
-            int size = currentList[0].cards.size();
-
-            // list size check
-            if (size == 1) {
-                PtfLogger.warning("List is 1 long but 'back' button enabled !", CardLogCategories.CARDS, "main");
-                backButton.setEnabled(false);
-                return;
-            }
-
-            // check for first card
-            if (index[0] <= 0) {
-                backButton.setEnabled(false);
-                nextButton.setEnabled(true);
-                PtfLogger.warning("'back' button on, but first card is live !", CardLogCategories.CARDS, "main");
-                return;
-            }
-
-            // decrease index : now preparing next cycle
-            index[0]--;
-
-            // force next button on & update text
-            nextButton.setEnabled(true);
-            cardLabel.setText(currentList[0].cards.get(index[0]).main);
-
-            // disable itself if first card is live & enable next button
-            if (index[0] == 0) backButton.setEnabled(false);
-        });
-
-        return panel;
+        // default states for buttons
+        backButton.setDisable(true);
+        flipButton.setDisable(false);
+        nextButton.setDisable(!(currentList.cards.size() > 1));
     }
 
     private JPanel createListPanel() {
