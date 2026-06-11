@@ -63,7 +63,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private final ComboBox<String> exportComboBox = new ComboBox<>();
     private final ComboBox<String> mainComboBox = new ComboBox<>();
     private final ComboBox<String> modifyComboBox = new ComboBox<>();
-    private final List<JComboBox<String>> allComboBox = new ArrayList<>();
+    private final List<ComboBox<String>> allComboBox = new ArrayList<>();
 
     @Override
     protected void instantiate() {
@@ -80,9 +80,9 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         allComboBox.add(mainComboBox);
         allComboBox.add(modifyComboBox);
 
-        // exportComboBox.setName("Export box"); // todo
-        // mainComboBox.setName("Main box"); // todo
-        // modifyComboBox.setName("Modify box"); // todo
+        exportComboBox.setId("Export box");
+        mainComboBox.setId("Main box");
+        modifyComboBox.setId("Modify box");
 
         // TODO: mk selection models
 
@@ -526,21 +526,21 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     }
 
     private void refreshComboBox() {
-        for (JComboBox<String> c : allComboBox) refreshComboBox(c);
+        for (ComboBox<String> c : allComboBox) refreshComboBox(c);
         PtfLogger.info("Refreshed all combo boxes !", CardLogCategories.CARDS);
     }
 
-    private void refreshComboBox(JComboBox<String> box) {
-        box.removeAllItems();
-        box.addItem(Translations.get("common:select_list"));
+    private void refreshComboBox(ComboBox<String> box) {
+        box.getItems().clear();
+        box.getItems().add(Translations.get("common:select_list"));
         File[] jsonFiles = cardsDir.toFile().listFiles((dir, name) -> name.endsWith(".json"));
         // null check
         if (jsonFiles != null) {
             // add
             for (File file : jsonFiles) {
                 String name = file.getName().replace(".json", "");
-                box.addItem(name);
-                PtfLogger.info("Added " + name + " to " + box.getName(), CardLogCategories.CARDS, "reloadBox");
+                box.getItems().add(name);
+                PtfLogger.info("Added " + name + " to " + box.getId(), CardLogCategories.CARDS, "reloadBox");
             }
         } else PtfLogger.error("Can't get the list of lists !", CardLogCategories.CARDS, "reloadBox");
     }
