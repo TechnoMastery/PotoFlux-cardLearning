@@ -57,6 +57,8 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     // all vars shared between methods
     private ListView<GridPane> listPanel = new ListView<>();
+
+    private final String defaultComboSelected = Translations.get("common:select_list");
     private ComboBox<String> exportComboBox = new ComboBox<>();
     private ComboBox<String> mainComboBox = new ComboBox<>();
     private ComboBox<String> modifyComboBox = new ComboBox<>();
@@ -247,7 +249,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     }
     private void startQuiz() {
         String selected = mainComboBox.getSelectionModel().getSelectedItem();
-        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+        if (selected == null || selected.equals(defaultComboSelected)) {
             PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "main");
             return;
         }
@@ -441,7 +443,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         String selected = exportComboBox.getSelectionModel().getSelectedItem();
 
         // null check
-        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+        if (selected == null || selected.equals(defaultComboSelected)) {
             cardScroll.setContent(null);
             exportButton.setDisable(true);
             PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
@@ -482,7 +484,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private void exportList() {
         String selected = exportComboBox.getSelectionModel().getSelectedItem();
 
-        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+        if (selected == null || selected.equals(defaultComboSelected)) {
             PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
             return;
         }
@@ -548,7 +550,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     private void refreshComboBox(ComboBox<String> box) {
         box.getItems().clear();
-        box.getItems().add(Translations.get("common:select_list"));
+        box.getItems().add(defaultComboSelected);
         File[] jsonFiles = cardsDir.toFile().listFiles((dir, name) -> name.endsWith(".json"));
         // null check
         if (jsonFiles != null) {
@@ -914,7 +916,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         UiUtils.showConfirmationDialog(comboPanel, Translations.get("card_learning:tabs.card.choose_list"));
         String selected = modifyComboBox.getSelectionModel().getSelectedItem();
 
-        if (selected == null || selected.equals(Translations.get("common:select_list"))) {
+        if (selected == null || selected.equals(defaultComboSelected)) {
             PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "create");
             UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.no_selected"));
             return;
