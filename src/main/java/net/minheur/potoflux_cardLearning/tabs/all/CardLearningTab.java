@@ -46,7 +46,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     // load
     private CardList loadedCards;
-    private ScrollPane loadedCardsDisplay;
     private Button validateLoadButton;
 
     // create
@@ -372,8 +371,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         dialogPane.setTop(title);
 
         // card
-        ScrollPane scrollPane = createCardPanelAsScroll(list);
-        dialogPane.setCenter(scrollPane);
+        dialogPane.setCenter(createCardPanel(list));
 
         infoDialog.getDialogPane().setContent(dialogPane);
 
@@ -428,23 +426,18 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 exportButton
         );
 
-        // display cards
-        ScrollPane cardScroll = new ScrollPane();
-        cardScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        cardScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
         // behaviour
-        exportComboBox.setOnAction(e -> reloadExportDisplayedList(cardScroll, exportButton));
+        exportComboBox.setOnAction(e -> reloadExportDisplayedList(panel, exportButton));
 
         return panel;
     }
 
-    private void reloadExportDisplayedList(ScrollPane cardScroll, Button exportButton) {
+    private void reloadExportDisplayedList(BorderPane cardScroll, Button exportButton) {
         String selected = exportComboBox.getSelectionModel().getSelectedItem();
 
         // null check
         if (selected == null || selected.equals(defaultComboSelected)) {
-            cardScroll.setContent(null);
+            cardScroll.setCenter(null);
             exportButton.setDisable(true);
             PtfLogger.warning("Can't select 'choose list' option !", CardLogCategories.CARDS, "export");
             return;
@@ -453,7 +446,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         // existing file check
         Path filePath = cardsDir.resolve(selected + ".json");
         if (!Files.exists(filePath)) {
-            cardScroll.setContent(new Label(Translations.get("file:error.not_found")));
+            cardScroll.setCenter(new Label(Translations.get("file:error.not_found")));
             exportButton.setDisable(true);
             PtfLogger.error("File not found: " + selected, CardLogCategories.CARDS, "export");
             return;
@@ -465,19 +458,19 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
             // null check
             if (list == null || list.cards == null) {
-                cardScroll.setContent(new Label(Translations.get("potoflux:tabs.card.error.loading_list")));
+                cardScroll.setCenter(new Label(Translations.get("potoflux:tabs.card.error.loading_list")));
                 exportButton.setDisable(true);
                 PtfLogger.error("List can't be null: " + selected, CardLogCategories.CARDS, "export");
                 return;
             }
 
             ListView<GridPane> items = createCardPanel(list);
-            cardScroll.setContent(items);
+            cardScroll.setCenter(items);
             exportButton.setDisable(false); // export button is now available
         } catch (Exception ex) {
             ex.printStackTrace();
             PtfLogger.error("Error while exporting: " + selected, CardLogCategories.CARDS, "export");
-            cardScroll.setContent(new Label(Translations.get("card_learning:tabs.card.error.reading_file")));
+            cardScroll.setCenter(new Label(Translations.get("card_learning:tabs.card.error.reading_file")));
             exportButton.setDisable(true);
         }
     }
@@ -565,12 +558,8 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     }
 
     private BorderPane createLoadPanel() {
-        loadedCardsDisplay = new ScrollPane();
-        loadedCardsDisplay.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        loadedCardsDisplay.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
         BorderPane panel = new BorderPane();
-        panel.setCenter(loadedCardsDisplay);
 
         HBox buttons = new HBox();
         Button loadButton = new Button(Translations.get("file:json.import"));
@@ -581,19 +570,19 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 loadButton, validateLoadButton
         );
 
-        loadButton.setOnAction(e -> loadList());
-        validateLoadButton.setOnAction(e -> validateLoad());
+        loadButton.setOnAction(e -> loadList(panel));
+        validateLoadButton.setOnAction(e -> validateLoad(panel));
 
         panel.setTop(buttons);
         return panel;
     }
 
-    private void validateLoad() {
+    private void validateLoad(BorderPane panel) {
         if (loadedCards == null) {
             PtfLogger.error("No loaded list, but enabled 'Validate' button !", CardLogCategories.CARDS, "load");
             UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.empty_list_valid"));
             validateLoadButton.setDisable(true);
-            removeLoadedCards();
+            removeLoadedCards(panel);
         }
 
         String fileName = loadedCards.name.replace(" ", "_");
@@ -605,7 +594,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             UiUtils.showErrorPane(Translations.get("file:error.exist.desc") + "\n" + Translations.get("common:add_cancel"));
             loadedCards = null;
             validateLoadButton.setDisable(true);
-            removeLoadedCards();
+            removeLoadedCards(panel);
             return;
         }
 
@@ -618,7 +607,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
             validateLoadButton.setDisable(true);
             loadedCards = null;
-            removeLoadedCards();
+            removeLoadedCards(panel);
 
             loadListPanel(); // reload
         } catch (IOException ex) {
@@ -627,7 +616,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             UiUtils.showErrorPane(Translations.get("file:error.saving") + ex.getMessage());
         }
     }
-    private void loadList() {
+    private void loadList(BorderPane panel) {
         PtfLogger.info("User wants to import a list !", CardLogCategories.CARDS, "load");
 
         FileChooser chooser = new FileChooser();
@@ -683,12 +672,12 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             return;
         }
 
-        loadedCardsDisplay.setContent(createCardPanel(loadedCards));
+        panel.setCenter(createCardPanel(loadedCards));
     }
 
-    private void removeLoadedCards() {
-        if (loadedCardsDisplay != null)
-            loadedCardsDisplay.setContent(null);
+    private void removeLoadedCards(BorderPane pane) {
+        if (pane != null)
+            pane.setCenter(null);
         else PtfLogger.warning("Can't clear a null panel !", CardLogCategories.CARDS, "load");
     }
 
@@ -715,16 +704,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
 
         return allCards;
-    }
-
-    private ScrollPane createCardPanelAsScroll(CardList list) {
-        Node p = createCardPanel(list);
-
-        ScrollPane scrollPane = new ScrollPane(p);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
-        return scrollPane;
     }
 
     private String getCheckedListName(String s) {
