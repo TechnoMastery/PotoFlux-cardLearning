@@ -20,6 +20,7 @@ import net.minheur.potoflux.screen.tabs.BaseTab;
 import net.minheur.potoflux.translations.Translations;
 import net.minheur.potoflux_cardLearning.CardLearningMod;
 import net.minheur.potoflux_cardLearning.utility.CardLogCategories;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,7 +99,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         Platform.runLater(this::refreshComboBoxes);
     }
 
-    private Tab buildTab(String name, Node content) {
+    private @NotNull Tab buildTab(String name, Node content) {
         Tab t = new Tab(name, content);
         t.setClosable(false);
         return t;
@@ -116,7 +117,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     }
 
-    private BorderPane createMainPanel() {
+    private @NotNull BorderPane createMainPanel() {
         BorderPane pane = new BorderPane();
 
         // === TOP - list selection ===
@@ -285,7 +286,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         nextButton.setDisable(!(currentList.cards.size() > 1));
     }
 
-    private BorderPane createListPanel() {
+    private @NotNull BorderPane createListPanel() {
         BorderPane panel = new BorderPane();
 
         // title
@@ -353,7 +354,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         refreshComboBoxes();
     }
 
-    private void displayListDetails(CardList list) {
+    private void displayListDetails(@NotNull CardList list) {
         // window for display
         Dialog<Void> infoDialog = new Dialog<>();
         infoDialog.setTitle(Translations.get("card_learning:tabs.card.details") + list.name);
@@ -375,7 +376,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         infoDialog.show();
     }
-    private void deleteList(File filePlacement, CardList content) {
+    private void deleteList(File filePlacement, @NotNull CardList content) {
         boolean confirmed = UiUtils.showConfirmationDialog(
                 new Label(
                         Translations.get("card_learning:tabs.card.list.delete.confirm.dialog") + content.name + " ?"
@@ -400,7 +401,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    private BorderPane createExportPanel() {
+    private @NotNull BorderPane createExportPanel() {
         BorderPane panel = new BorderPane();
 
         // UP - title + select list + button
@@ -538,7 +539,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         for (ComboBox<String> c : allComboBox) refreshComboBox(c);
         PtfLogger.info("Refreshed all combo boxes !", CardLogCategories.CARDS);
     }
-    private void refreshComboBox(ComboBox<String> box) {
+    private void refreshComboBox(@NotNull ComboBox<String> box) {
         box.getItems().clear();
         box.getItems().add(defaultComboSelected);
         box.getSelectionModel().select(defaultComboSelected);
@@ -555,7 +556,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         } else PtfLogger.error("Can't get the list of lists !", CardLogCategories.CARDS, "reloadBox");
     }
 
-    private BorderPane createLoadPanel() {
+    private @NotNull BorderPane createLoadPanel() {
 
         BorderPane panel = new BorderPane();
 
@@ -679,7 +680,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         else PtfLogger.warning("Can't clear a null panel !", CardLogCategories.CARDS, "load");
     }
 
-    private ListView<HBox> createCardPanel(CardList list) {
+    private @NotNull ListView<HBox> createCardPanel(@NotNull CardList list) {
         ListView<HBox> allCards = new ListView<>();
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -727,7 +728,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    private BorderPane createCreatePanel() {
+    private @NotNull BorderPane createCreatePanel() {
         BorderPane panel = new BorderPane();
 
         // up - name + button
