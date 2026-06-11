@@ -21,8 +21,6 @@ import net.minheur.potoflux_cardLearning.CardLearningMod;
 import net.minheur.potoflux_cardLearning.utility.CardLogCategories;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
