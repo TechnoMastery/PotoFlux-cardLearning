@@ -714,8 +714,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     private void showCardError() {
         PtfLogger.error("Invalid JSON file !", CardLogCategories.CARDS, "load");
-        JOptionPane.showMessageDialog(PANEL, Translations.get("file:json.error.invalid"),
-                Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
+        UiUtils.showErrorPane(Translations.get("file:json.error.invalid"));
     }
 
     private void checkAndCreateDir() {
