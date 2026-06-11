@@ -551,6 +551,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private void refreshComboBox(ComboBox<String> box) {
         box.getItems().clear();
         box.getItems().add(defaultComboSelected);
+        box.getSelectionModel().select(defaultComboSelected);
         File[] jsonFiles = cardsDir.toFile().listFiles((dir, name) -> name.endsWith(".json"));
         // null check
         if (jsonFiles != null) {
