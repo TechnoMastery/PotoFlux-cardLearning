@@ -1,15 +1,34 @@
 plugins {
-    id 'java'
+    id 'java-library'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'application'
 }
 
 group = 'net.minheur.potoflux_card_learning'
 version = '2.6'
 
+def javafxversion = "17.0.10"
+def ptfVersion = "7.0"
+
 repositories {
     mavenCentral()
-    flatDir {
-        dirs 'libs'
+    maven {
+        url = uri("https://maven.pkg.github.com/TechnoMastery/PotoFlux")
+        credentials {
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.key")
+        }
     }
+}
+
+javadoc {
+    options.links(
+            "https://technomastery.github.io/PotoFluxAppData/javadoc/$ptfVersion",
+            "https://openjfx.io/javadoc/17/",
+            "https://javadoc.io/doc/org.reflections/reflections/0.10.2/",
+            "https://javadoc.io/doc/com.google.code.gson/gson/2.11.0/",
+            "https://javadoc.io/doc/org.jetbrains/annotations/24.1.0/"
+    )
 }
 
 java {
@@ -20,35 +39,38 @@ java {
     withJavadocJar()
 }
 
+javafx {
+    version = '17'
+    modules = [ 'javafx.controls', 'javafx.graphics' ]
+}
+
 dependencies {
+    implementation "org.openjfx:javafx-controls:$javafxversion"
+    implementation "org.openjfx:javafx-graphics:$javafxversion"
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     // PotoFlux
-    implementation name: 'PotoFlux-6.7'
-
-    // PotoFlux dependencies
-    implementation 'com.google.code.gson:gson:2.11.0'
-    implementation "org.reflections:reflections:0.10.2"
-
-    // theme
-    implementation 'com.formdev:flatlaf:3.3'
+    implementation "net.minheur:potoflux:$ptfVersion"
 }
 
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'net.minheur.potoflux.PotoFlux',
-                'Implementation-Version': project.version
-        )
-    }
-}
+// jar {
+//     manifest {
+//         attributes(
+//                 'Main-Class': 'net.minheur.potoflux.PotoFlux',
+//                 'Implementation-Version': project.version
+//         )
+//     }
+// }
 
 processResources {
     filesMatching("modVersion.properties") {
         expand "version": version
     }
 }
+
+build.dependsOn jar
 
 tasks.register("generateModVersionProperties") {
     def outputDir = file("$buildDir/generated/resources")
@@ -75,7 +97,7 @@ tasks.named("sourcesJar") {
     exclude("**/*.json", "**/*.toml", "**/*.lang")
 }
 
-tasks.register("run", JavaExec) {
+tasks.named("run", JavaExec) {
     group = "potoflux"
     description = "Run PotoFlux"
 
