@@ -23,7 +23,6 @@ import net.minheur.potoflux_cardLearning.utility.CardLogCategories;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,12 +39,18 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     private TabPane subTabs;
 
+    // main
     private CardList currentList;
     private int index;
     private Label cardLabel;
     private Button backButton;
     private Button flipButton;
     private Button nextButton;
+
+    // load
+    private CardList loadedCards;
+    private ScrollPane loadedCardsDisplay;
+    private Button validateLoadButton;
 
     // all vars shared between methods
     private final ListView<GridPane> listPanel = new ListView<>();
@@ -534,149 +539,132 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         } else PtfLogger.error("Can't get the list of lists !", CardLogCategories.CARDS, "reloadBox");
     }
 
-    private JPanel createLoadPanel() {
-        CardList[] list = new CardList[1];
-        JScrollPane[] loadedListCards = new JScrollPane[1];
+    private BorderPane createLoadPanel() {
+        loadedCardsDisplay = new ScrollPane();
+        loadedCardsDisplay.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        loadedCardsDisplay.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
-        JPanel panel = new JPanel(new BorderLayout());
+        BorderPane panel = new BorderPane();
+        panel.setCenter(loadedCardsDisplay);
 
-        JButton loadButton = new JButton(Translations.get("file:json.import"));
-        JButton validateButton = new JButton(Translations.get("common:validate"));
-        validateButton.setEnabled(false);
+        HBox buttons = new HBox();
+        Button loadButton = new Button(Translations.get("file:json.import"));
+        validateLoadButton = new Button(Translations.get("common:validate"));
+        validateLoadButton.setDisable(true);
 
-        loadButton.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
+        buttons.getChildren().addAll(
+                loadButton, validateLoadButton
+        );
 
-            PtfLogger.info("User wants to import a list !", CardLogCategories.CARDS, "load");
+        loadButton.setOnAction(e -> loadList());
+        validateLoadButton.setOnAction(e -> validateLoad());
 
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(Translations.get("file:json"), "json");
-            chooser.setFileFilter(filter);
-            chooser.setAcceptAllFileFilterUsed(false);
-
-            int result = chooser.showOpenDialog(panel);
-            if (result != JFileChooser.APPROVE_OPTION) {
-                PtfLogger.info("User canceled import.", CardLogCategories.CARDS, "load");
-                return;
-            }
-
-            // get file
-            File selectedFile = chooser.getSelectedFile();
-            // turn to path
-            Path selectedPath = selectedFile.toPath();
-
-            // show check : file loaded
-            PtfLogger.info("User chose file " + selectedFile.getName(), CardLogCategories.CARDS, "load");
-            JOptionPane.showMessageDialog(
-                    panel, Translations.get("card_learning:tabs.card.file_loaded") + selectedFile.getName() +
-                            "\n" + Translations.get("common:path") + selectedPath);
-
-            try {
-                // read content
-                String content = Files.readString(selectedPath);
-
-                // parse to JSON object
-                list[0] = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
-
-                // check is everything right
-                if (list[0] == null || list[0].cards == null || getCheckedListName(list[0].name) == null) {
-                    showCardError();
-                    return;
-                } else {
-                    for (Card card : list[0].cards) if (card.main == null || card.secondary == null) {
-                        showCardError();
-                        return;
-                    }
-                    list[0].name = removeProhibitedChar(list[0].name);
-                    PtfLogger.info("Successfully loaded list: " + list[0].name, CardLogCategories.CARDS, "load");
-                    JOptionPane.showMessageDialog(PANEL, Translations.get("card_learning:tabs.card.list.loaded") + list[0].name +
-                            "\n" + Translations.get("card_learning:tabs.card.card_number") + list[0].cards.size());
-                    validateButton.setEnabled(true);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Error while reading file " + selectedPath, CardLogCategories.CARDS, "load");
-                JOptionPane.showMessageDialog(PANEL, Translations.get("file:error.json.loading"),
-                        Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            loadedListCards[0] = createCardPanelAsScroll(list[0]);
-            panel.add(loadedListCards[0]);
-            panel.revalidate();
-            panel.repaint();
-        });
-
-        validateButton.addActionListener(e -> {
-            if (list[0] == null) {
-                PtfLogger.error("No loaded list, but enabled 'Validate' button !", CardLogCategories.CARDS, "load");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("card_learning:tabs.card.empty_list_valid"),
-                        Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-                list[0] = null;
-                validateButton.setEnabled(false);
-                removeLoadedCards(loadedListCards[0], panel);
-                loadedListCards[0] = null;
-            }
-
-            String fileName = list[0].name.replaceAll(" ", "_");
-            Path outputFile = cardsDir.resolve(fileName + ".json");
-
-            // cancel if already existing
-            if (Files.exists(outputFile)) {
-                PtfLogger.error("There is already a list named '" + list[0].name + "' in directory !", CardLogCategories.CARDS, "load");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("file:error.exist.desc") +
-                                "\n" + Translations.get("common:add_cancel"),
-                        Translations.get("file:error.exist"),
-                        JOptionPane.ERROR_MESSAGE);
-                list[0] = null;
-                validateButton.setEnabled(false);
-                removeLoadedCards(loadedListCards[0], panel);
-                loadedListCards[0] = null;
-                return;
-            }
-
-            try {
-                Gson gson = new Gson();
-                Files.writeString(outputFile, gson.toJson(list[0]));
-
-                PtfLogger.info("File " + list[0].name + " has been saved !", CardLogCategories.CARDS, "load");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("file:saved"),
-                        Translations.get("common:success"),
-                        JOptionPane.INFORMATION_MESSAGE);
-
-                validateButton.setEnabled(false);
-                list[0] = null;
-                removeLoadedCards(loadedListCards[0], panel);
-                loadedListCards[0] = null;
-
-                loadListPanel(); // reload
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                PtfLogger.error("Failed to write into file: " + list[0].name, CardLogCategories.CARDS, "load");
-                JOptionPane.showMessageDialog(PANEL,
-                        Translations.get("file:error.saving") + ex.getMessage(),
-                        Translations.get("common:error"), JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        // adding buttons to the panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.add(loadButton);
-        buttonPanel.add(validateButton);
-
-        panel.add(buttonPanel, BorderLayout.NORTH);
+        panel.setTop(buttons);
         return panel;
     }
 
-    private void removeLoadedCards(JScrollPane scrollPane, JPanel panel) {
-        if (scrollPane != null) {
-            panel.remove(scrollPane);
-            panel.revalidate();
-            panel.repaint();
-            PtfLogger.info("Removed pane " + scrollPane.getName() + " from " + panel.getName(), CardLogCategories.CARDS, "load");
-        } else PtfLogger.warning("Can't remove a null panel !", CardLogCategories.CARDS, "load");
+    private void validateLoad() {
+        if (loadedCards == null) {
+            PtfLogger.error("No loaded list, but enabled 'Validate' button !", CardLogCategories.CARDS, "load");
+            UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.empty_list_valid"));
+            validateLoadButton.setDisable(true);
+            removeLoadedCards();
+        }
+
+        String fileName = loadedCards.name.replace(" ", "_");
+        Path outputFile = cardsDir.resolve(fileName + ".json");
+
+        // cancel if already existing
+        if (Files.exists(outputFile)) {
+            PtfLogger.error("There is already a list named '" + loadedCards.name + "' in directory !", CardLogCategories.CARDS, "load");
+            UiUtils.showErrorPane(Translations.get("file:error.exist.desc") + "\n" + Translations.get("common:add_cancel"));
+            loadedCards = null;
+            validateLoadButton.setDisable(true);
+            removeLoadedCards();
+            return;
+        }
+
+        try {
+            Gson gson = new Gson();
+            Files.writeString(outputFile, gson.toJson(loadedCards));
+
+            PtfLogger.info("File " + loadedCards.name + " has been saved !", CardLogCategories.CARDS, "load");
+            UiUtils.showMessagePane(Translations.get("file:saved"));
+
+            validateLoadButton.setDisable(true);
+            loadedCards = null;
+            removeLoadedCards();
+
+            loadListPanel(); // reload
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Failed to write into file: " + loadedCards.name, CardLogCategories.CARDS, "load");
+            UiUtils.showErrorPane(Translations.get("file:error.saving") + ex.getMessage());
+        }
+    }
+    private void loadList() {
+        PtfLogger.info("User wants to import a list !", CardLogCategories.CARDS, "load");
+
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        Translations.get("file:json"),
+                        "*.json"
+                )
+        );
+
+        File selectedFile = chooser.showOpenDialog(PotoFlux.app.getStage());
+        if (selectedFile == null) {
+            PtfLogger.info("User canceled import.", CardLogCategories.CARDS, "load");
+            return;
+        }
+
+        // turn to path
+        Path selectedPath = selectedFile.toPath();
+
+        // show check : file loaded
+        PtfLogger.info("User chose file " + selectedFile.getName(), CardLogCategories.CARDS, "load");
+        UiUtils.showMessagePane(
+                Translations.get("card_learning:tabs.card.file_loaded") + selectedFile.getName() + "\n" + Translations.get("common:path") + selectedPath
+        );
+
+        try {
+            // read content
+            String content = Files.readString(selectedPath);
+
+            // parse to JSON object
+            loadedCards = CardJsonManager.fromJson(JsonParser.parseString(content).getAsJsonObject(), false);
+
+            // check is everything right
+            if (loadedCards == null || loadedCards.cards == null || getCheckedListName(loadedCards.name) == null) {
+                showCardError();
+                return;
+            } else {
+                for (Card card : loadedCards.cards) if (card.main == null || card.secondary == null) {
+                    showCardError();
+                    return;
+                }
+                loadedCards.name = removeProhibitedChar(loadedCards.name);
+                PtfLogger.info("Successfully loaded list: " + loadedCards.name, CardLogCategories.CARDS, "load");
+                UiUtils.showMessagePane(
+                        Translations.get("card_learning:tabs.card.list.loaded") + loadedCards.name + "\n" + Translations.get("card_learning:tabs.card.card_number") + loadedCards.cards.size()
+                );
+                validateLoadButton.setDisable(false);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Error while reading file " + selectedPath, CardLogCategories.CARDS, "load");
+            UiUtils.showErrorPane(Translations.get("file:error.json.loading"));
+            return;
+        }
+
+        loadedCardsDisplay.setContent(createCardPanel(loadedCards));
+    }
+
+    private void removeLoadedCards() {
+        if (loadedCardsDisplay != null)
+            loadedCardsDisplay.setContent(null);
+        else PtfLogger.warning("Can't clear a null panel !", CardLogCategories.CARDS, "load");
     }
 
     private ListView<GridPane> createCardPanel(CardList list) {
