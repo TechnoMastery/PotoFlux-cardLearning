@@ -20,7 +20,6 @@ import net.minheur.potoflux.translations.Translations;
 import net.minheur.potoflux_cardLearning.CardLearningMod;
 import net.minheur.potoflux_cardLearning.utility.CardLogCategories;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,16 +51,16 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     // create
     private ListView<GridPane> createdCardsGrid;
-    private final List<Card> createdCardList = new ArrayList<>();
+    private List<Card> createdCardList;
     private Button saveCreatedCards;
-    private final TextField createdListName = new TextField();
+    private TextField createdListName;
 
     // all vars shared between methods
-    private final ListView<GridPane> listPanel = new ListView<>();
-    private final ComboBox<String> exportComboBox = new ComboBox<>();
-    private final ComboBox<String> mainComboBox = new ComboBox<>();
-    private final ComboBox<String> modifyComboBox = new ComboBox<>();
-    private final List<ComboBox<String>> allComboBox = new ArrayList<>();
+    private ListView<GridPane> listPanel = new ListView<>();
+    private ComboBox<String> exportComboBox = new ComboBox<>();
+    private ComboBox<String> mainComboBox = new ComboBox<>();
+    private ComboBox<String> modifyComboBox = new ComboBox<>();
+    private List<ComboBox<String>> allComboBox = new ArrayList<>();
 
     @Override
     protected void instantiate() {
@@ -73,6 +72,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     @Override
     protected void setPanel() {
+        setupFields();
 
         allComboBox.add(exportComboBox);
         allComboBox.add(mainComboBox);
@@ -92,6 +92,18 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         subTabs.getTabs().add(new Tab(Translations.get("common:load"), createLoadPanel()));
         subTabs.getTabs().add(new Tab(Translations.get("common:create"), createCreatePanel()));
         subTabs.getTabs().add(new Tab(Translations.get("common:export"), createExportPanel()));
+
+    }
+
+    private void setupFields() {
+        createdCardList = new ArrayList<>();
+        createdListName = new TextField();
+
+        listPanel = new ListView<>();
+        exportComboBox = new ComboBox<>();
+        mainComboBox = new ComboBox<>();
+        modifyComboBox = new ComboBox<>();
+        allComboBox = new ArrayList<>();
 
     }
 
