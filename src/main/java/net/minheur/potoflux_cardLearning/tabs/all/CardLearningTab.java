@@ -2,11 +2,11 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import net.minheur.potoflux.logger.PtfLogger;
 import net.minheur.potoflux.ui.UiUtils;
@@ -46,7 +46,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private Button nextButton;
 
     // all vars shared between methods
-    private final JPanel listPanel = new JPanel();
+    private final ListView<GridPane> listPanel = new ListView<>();
     private final JComboBox<String> exportComboBox = new JComboBox<>();
     private final ComboBox<String> mainComboBox = new ComboBox<>();
     private final JComboBox<String> modifyComboBox = new JComboBox<>();
@@ -255,35 +255,37 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         nextButton.setDisable(!(currentList.cards.size() > 1));
     }
 
-    private JPanel createListPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+    private BorderPane createListPanel() {
+        BorderPane panel = new BorderPane();
 
         // title
-        JLabel title = new JLabel(Translations.get("card_learning:tabs.card.available_lists"), SwingConstants.CENTER);
-        title.setFont(new Font("Segeo UI", Font.BOLD, 16));
-        panel.add(title, BorderLayout.NORTH);
-
-        // content
-        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        Label title = new Label(Translations.get("card_learning:tabs.card.available_lists"));
+        title.setFont(new Font("Segeo UI", 16));
+        panel.setTop(title);
 
         loadListPanel();
 
         // scrollable
-        JScrollPane scrollPane = new JScrollPane(listPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        ScrollPane scrollPane = new ScrollPane(listPanel);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.setCenter(scrollPane);
         return panel;
     }
 
     private void loadListPanel() {
-        listPanel.removeAll();
+        listPanel.getItems().clear();
+
         File[] jsonFiles = cardsDir.toFile().listFiles((dir, name) -> name.endsWith(".json"));
 
         if (jsonFiles == null || jsonFiles.length == 0) {
-            listPanel.add(new JLabel(Translations.get("card_learning:tabs.card.list.no_found"), SwingConstants.CENTER));
             PtfLogger.info("No lists found !", CardLogCategories.CARDS, "list");
+
+            GridPane fallbackGrid = new GridPane();
+            fallbackGrid.add(new Label(Translations.get("card_learning:tabs.card.list.no_found")), 0, 0);
+            listPanel.getItems().add(fallbackGrid);
+
         } else {
             for (File file : jsonFiles) try {
                 // read content
@@ -296,94 +298,79 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 }
 
                 // create line for list
-                JPanel row = new JPanel(new BorderLayout());
-                row.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true),
-                        BorderFactory.createEmptyBorder(5, 10, 5, 10)
-                ));
+                GridPane row = new GridPane();
 
                 // left - text
-                JLabel label = new JLabel(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")");
-                label.setFont(new Font("Segeo UI", Font.PLAIN, 14));
-                row.add(label, BorderLayout.WEST);
+                Label label = new Label(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")");
+                label.setFont(new Font("Segeo UI", 14));
+                row.add(label, 0, 0);
 
                 // right - buttons
-                JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-                JButton deleteButton = new JButton(Translations.get("common:delete"));
-                JButton infoButton = new JButton(Translations.get("common:info"));
+                Button deleteButton = new Button(Translations.get("common:delete"));
+                Button infoButton = new Button(Translations.get("common:info"));
 
-                deleteButton.addActionListener(e -> {
-                    int confirm = JOptionPane.showConfirmDialog(listPanel,
-                            Translations.get("card_learning:tabs.card.list.delete.confirm.dialog") + list.name + " ?",
-                            Translations.get("card_learning:tabs.card.list.delete.confirm"),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
+                deleteButton.setOnAction(e -> deleteList(file, list));
+                infoButton.setOnAction(e -> displayListDetails(list));
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        try {
-                            Files.deleteIfExists(file.toPath());
-                            JOptionPane.showMessageDialog(listPanel,
-                                    Translations.get("card_learning:tabs.card.list.delete.done.start") + list.name + Translations.get("card_learning:tabs.card.list.delete.done.end"),
-                                    Translations.get("common:delete.success"),
-                                    JOptionPane.INFORMATION_MESSAGE);
-                            PtfLogger.info("List " + list.name + " has successfully been deleted !", CardLogCategories.CARDS, "list");
-                            loadListPanel();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                            JOptionPane.showMessageDialog(listPanel,
-                                    Translations.get("card_learning:tabs.card.delete_error") + ex.getMessage(),
-                                    Translations.get("common:error"),
-                                    JOptionPane.ERROR_MESSAGE);
-                            PtfLogger.error("Failed to delete list " + list.name, CardLogCategories.CARDS, "list");
-                        }
-                    }
-                });
+                row.add(deleteButton, 2, 0);
+                row.add(infoButton, 1, 0);
 
-                infoButton.addActionListener(e -> {
-                    // window for display
-                    JDialog infoDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(PANEL), Translations.get("card_learning:tabs.card.details") + list.name, true);
-                    infoDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-                    infoDialog.setLocationRelativeTo(PANEL);
-                    infoDialog.setLayout(new BorderLayout());
-
-                    // title
-                    JLabel title = new JLabel(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")", SwingConstants.CENTER);
-                    title.setFont(new Font("Segeo UI", Font.BOLD, 16));
-                    infoDialog.add(title, BorderLayout.NORTH);
-
-                    // card
-                    JScrollPane scrollPane = createCardPanelAsScroll(list);
-                    infoDialog.add(scrollPane, BorderLayout.CENTER);
-
-                    // close button
-                    JButton closeButton = new JButton(Translations.get("common:close"));
-                    closeButton.addActionListener(ev -> infoDialog.dispose());
-
-                    JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-                    bottomPanel.add(closeButton);
-                    infoDialog.add(bottomPanel, BorderLayout.SOUTH);
-
-                    infoDialog.pack();
-                    infoDialog.setLocationRelativeTo(PANEL);
-                    infoDialog.setVisible(true);
-                });
-
-                buttons.add(deleteButton);
-                buttons.add(infoButton);
-
-                row.add(buttons, BorderLayout.EAST);
-
-                listPanel.add(row);
+                listPanel.getItems().add(row);
             } catch (Exception e) {
                 e.printStackTrace();
                 PtfLogger.error("Failed to read list file !", CardLogCategories.CARDS, "list");
             }
         }
 
-        listPanel.revalidate();
-        listPanel.repaint();
-
         refreshComboBox();
+    }
+
+    private void displayListDetails(CardList list) {
+        // window for display
+        Dialog<Void> infoDialog = new Dialog<>();
+        infoDialog.setTitle(Translations.get("card_learning:tabs.card.details") + list.name);
+
+        infoDialog.getDialogPane().getButtonTypes().add(UiUtils.closeButton.get());
+
+        // pane
+        BorderPane dialogPane = new BorderPane();
+
+        // title
+        Label title = new Label(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")");
+        title.setFont(new Font("Segeo UI", 16));
+        dialogPane.setTop(title);
+
+        // card
+        ScrollPane scrollPane = createCardPanelAsScroll(list);
+        dialogPane.setCenter(scrollPane);
+
+        infoDialog.getDialogPane().setContent(dialogPane);
+
+        infoDialog.show();
+    }
+    private void deleteList(File filePlacement, CardList content) {
+        boolean confirmed = UiUtils.showConfirmationDialog(
+                new Label(
+                        Translations.get("card_learning:tabs.card.list.delete.confirm.dialog") + content.name + " ?"
+                ), Translations.get("card_learning:tabs.card.list.delete.confirm")
+        );
+
+        if (!confirmed) return;
+
+        try {
+            Files.deleteIfExists(filePlacement.toPath());
+
+            PtfLogger.info("List " + content.name + " has successfully been deleted !", CardLogCategories.CARDS, "list");
+            UiUtils.showMessagePane(Translations.get("card_learning:tabs.card.list.delete.done.start") + content.name + Translations.get("card_learning:tabs.card.list.delete.done.end"));
+
+            loadListPanel();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            PtfLogger.error("Failed to delete list " + content.name, CardLogCategories.CARDS, "list");
+
+            UiUtils.showErrorPane(Translations.get("card_learning:tabs.card.delete_error") + ex.getMessage());
+        }
     }
 
     private JPanel createExportPanel() {
@@ -695,34 +682,38 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         } else PtfLogger.warning("Can't remove a null panel !", CardLogCategories.CARDS, "load");
     }
 
-    private JPanel createCardPanel(CardList list) {
-        JPanel allCards = new JPanel();
-        allCards.setLayout(new GridLayout(0, 1, 10, 10));
-        allCards.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    private ListView<GridPane> createCardPanel(CardList list) {
+        ListView<GridPane> allCards = new ListView<>();
+        Region spacer = new Region();
+        spacer.setMinHeight(10);
+        spacer.setPrefHeight(10);
 
         for (Card card : list.cards) {
-            JPanel cardPanel = new JPanel(new GridLayout(1, 2, 5, 5));
-            cardPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+            GridPane grid = new GridPane();
 
-            JLabel left = new JLabel(card.main, SwingConstants.CENTER);
-            JLabel right = new JLabel(card.secondary, SwingConstants.CENTER);
+            Label left = new Label(card.main);
+            Label right = new Label(card.secondary);
 
-            left.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            right.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            left.setFont(new Font("Segoe UI", 14));
+            right.setFont(new Font("Segoe UI", 14));
 
-            cardPanel.add(left);
-            cardPanel.add(right);
-            allCards.add(cardPanel);
+            grid.add(left, 0, 0);
+            grid.add(spacer, 1, 0);
+            grid.add(right, 2, 0);
+
+            allCards.getItems().add(grid);
         }
 
         return allCards;
     }
 
-    private JScrollPane createCardPanelAsScroll(CardList list) {
-        JPanel p = createCardPanel(list);
-        JScrollPane scrollPane = new JScrollPane(p);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+    private ScrollPane createCardPanelAsScroll(CardList list) {
+        Node p = createCardPanel(list);
+
+        ScrollPane scrollPane = new ScrollPane(p);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+
         return scrollPane;
     }
 
