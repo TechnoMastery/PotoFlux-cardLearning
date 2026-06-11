@@ -2,6 +2,9 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.layout.BorderPane;
 import net.minheur.potoflux.logger.PtfLogger;
 import net.minheur.potoflux_cardLearning.utility.Card;
 import net.minheur.potoflux_cardLearning.utility.CardJsonManager;
@@ -27,8 +30,10 @@ import java.util.List;
 
 import static net.minheur.potoflux.Functions.removeProhibitedChar;
 
-public class CardLearningTab extends BaseTab {
+public class CardLearningTab extends BaseTab<BorderPane> {
     public static final Path cardsDir = Paths.get(CardLearningMod.getModDir().toString(), "cards");
+
+    private TabPane subTabs;
 
     // all vars shared between methods
     private final JPanel listPanel = new JPanel();
@@ -38,29 +43,33 @@ public class CardLearningTab extends BaseTab {
     private final List<JComboBox<String>> allComboBox = new ArrayList<>();
 
     @Override
+    protected void instantiate() {
+        PANEL = new BorderPane();
+
+        subTabs = new TabPane();
+        PANEL.setCenter(subTabs);
+    }
+
+    @Override
     protected void setPanel() {
-        PANEL.setLayout(new BorderLayout());
 
         allComboBox.add(exportComboBox);
         allComboBox.add(mainComboBox);
         allComboBox.add(modifyComboBox);
 
-        exportComboBox.setName("Export box");
-        mainComboBox.setName("Main box");
-        modifyComboBox.setName("Modify box");
+        exportComboBox.setName("Export box"); // todo
+        mainComboBox.setName("Main box"); // todo
+        modifyComboBox.setName("Modify box"); // todo
 
         checkAndCreateDir();
 
         // create sub-tabs
-        JTabbedPane subTabs = new JTabbedPane();
-        subTabs.addTab(Translations.get("common:main"), createMainPanel());
-        subTabs.addTab(Translations.get("common:list"), createListPanel());
-        subTabs.addTab(Translations.get("common:load"), createLoadPanel());
-        subTabs.addTab(Translations.get("common:create"), createCreatePanel());
-        subTabs.addTab(Translations.get("common:export"), createExportPanel());
+        subTabs.getTabs().add(new Tab(Translations.get("common:main"), createMainPanel()));
+        subTabs.getTabs().add(new Tab(Translations.get("common:list"), createListPanel()));
+        subTabs.getTabs().add(new Tab(Translations.get("common:load"), createLoadPanel()));
+        subTabs.getTabs().add(new Tab(Translations.get("common:create"), createCreatePanel()));
+        subTabs.getTabs().add(new Tab(Translations.get("common:export"), createExportPanel()));
 
-        // add all to the main one
-        PANEL.add(subTabs, BorderLayout.CENTER);
     }
 
     private JPanel createMainPanel() {
@@ -1015,5 +1024,9 @@ public class CardLearningTab extends BaseTab {
     @Override
     protected String getTitle() {
         return Translations.get("card_learning:tabs.card.name");
+    }
+    @Override
+    public String getName() {
+        return getTitle();
     }
 }

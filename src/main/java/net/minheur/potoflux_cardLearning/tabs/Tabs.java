@@ -4,25 +4,17 @@ import net.minheur.potoflux.loader.mod.events.RegisterTabsEvent;
 import net.minheur.potoflux.registry.RegistryList;
 import net.minheur.potoflux.screen.tabs.Tab;
 import net.minheur.potoflux.translations.Translations;
+import net.minheur.potoflux.utils.SmartSupplier;
 import net.minheur.potoflux.utils.ressourcelocation.ResourceLocation;
 import net.minheur.potoflux_cardLearning.CardLearningMod;
 import net.minheur.potoflux_cardLearning.tabs.all.CardLearningTab;
 
 public class Tabs {
-    private final RegistryList<Tab> LIST = new RegistryList<>();
-    private static boolean hasGenerated = false;
+    private static final RegistryList<Tab> LIST = new RegistryList<>();
 
-    public static Tabs INSTANCE;
-
-    public Tabs() {
-        if (hasGenerated) throw new IllegalStateException("Can't create the registry 2 times !");
-        hasGenerated = true;
-    }
-
-    public final Tab CARD_LEARNING = LIST.add(new Tab(new ResourceLocation(CardLearningMod.MOD_ID, "card_learning"), Translations.get("card_learning:tabs.card.name"), CardLearningTab.class));
+    public static final SmartSupplier<Tab> CARD_LEARNING = LIST.add(() -> new Tab(new ResourceLocation(CardLearningMod.MOD_ID, "card_learning"), CardLearningTab.class));
 
     public static void register(RegisterTabsEvent event) {
-        INSTANCE = new Tabs();
-        INSTANCE.LIST.register(event.reg);
+        LIST.register(event.reg);
     }
 }
