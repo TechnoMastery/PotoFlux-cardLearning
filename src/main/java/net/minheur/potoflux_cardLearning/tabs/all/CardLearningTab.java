@@ -424,6 +424,8 @@ public class CardLearningTab extends BaseTab<BorderPane> {
                 exportButton
         );
 
+        panel.setTop(topPanel);
+
         // behaviour
         exportComboBox.setOnAction(e -> reloadExportDisplayedList(panel, exportButton));
 
