@@ -2,6 +2,7 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -58,10 +59,10 @@ public class CardLearningTab extends BaseTab<BorderPane> {
     private ListView<HBox> listPanel = new ListView<>();
 
     private final String defaultComboSelected = Translations.get("common:select_list");
-    private ComboBox<String> exportComboBox = new ComboBox<>();
-    private ComboBox<String> mainComboBox = new ComboBox<>();
-    private ComboBox<String> modifyComboBox = new ComboBox<>();
-    private List<ComboBox<String>> allComboBox = new ArrayList<>();
+    private ComboBox<String> exportComboBox;
+    private ComboBox<String> mainComboBox;
+    private ComboBox<String> modifyComboBox;
+    private List<ComboBox<String>> allComboBox;
 
     @Override
     protected void instantiate() {
@@ -94,6 +95,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         subTabs.getTabs().add(buildTab(Translations.get("common:create"), createCreatePanel()));
         subTabs.getTabs().add(buildTab(Translations.get("common:export"), createExportPanel()));
 
+        Platform.runLater(this::refreshComboBoxes);
     }
 
     private Tab buildTab(String name, Node content) {
@@ -121,8 +123,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         HBox topPanel = new HBox();
         Label listLabel = new Label(Translations.get("card_learning:tabs.card.list.column"));
         Button startButton = new Button(Translations.get("common:start"));
-
-        refreshComboBox();
 
         topPanel.getChildren().addAll(
                 listLabel,
@@ -350,7 +350,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             }
         }
 
-        refreshComboBox();
+        refreshComboBoxes();
     }
 
     private void displayListDetails(CardList list) {
@@ -409,8 +409,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         // title
         Label title = new Label(Translations.get("card_learning:tabs.card.export"));
         title.setFont(new Font("Segoe UI", 16));
-
-        refreshComboBox(); // adding .json files -- random, why here ?
 
         // export button
         Button exportButton = new Button(Translations.get("common:export"));
@@ -536,15 +534,15 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         }
     }
 
-    private void refreshComboBox() {
+    private void refreshComboBoxes() {
         for (ComboBox<String> c : allComboBox) refreshComboBox(c);
         PtfLogger.info("Refreshed all combo boxes !", CardLogCategories.CARDS);
     }
-
     private void refreshComboBox(ComboBox<String> box) {
         box.getItems().clear();
         box.getItems().add(defaultComboSelected);
         box.getSelectionModel().select(defaultComboSelected);
+        box.requestLayout();
         File[] jsonFiles = cardsDir.toFile().listFiles((dir, name) -> name.endsWith(".json"));
         // null check
         if (jsonFiles != null) {
@@ -879,7 +877,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
             }
         }
 
-        refreshComboBox();
+        refreshComboBoxes();
         createdCardList.clear();
 
         // def
