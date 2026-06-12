@@ -363,6 +363,8 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         // pane
         BorderPane dialogPane = new BorderPane();
+        dialogPane.setMaxSize(Double.MAX_VALUE, 400);
+        dialogPane.setPrefWidth(450);
 
         // title
         Label title = new Label(list.name + " (" + list.cards.size() + " " + Translations.get("common:cards") + ")");
@@ -682,8 +684,6 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
     private @NotNull ListView<HBox> createCardPanel(@NotNull CardList list) {
         ListView<HBox> allCards = new ListView<>();
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         for (Card card : list.cards) {
             HBox row = new HBox(5);
@@ -693,6 +693,9 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
             left.setFont(new Font("Segoe UI", 14));
             right.setFont(new Font("Segoe UI", 14));
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
 
             row.getChildren().addAll(
                     left, spacer, right
