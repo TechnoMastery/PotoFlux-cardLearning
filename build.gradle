@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'net.minheur.potoflux_card_learning'
-version = '2.6'
+version = '3.0'
 
 def javafxversion = "17.0.10"
 def ptfVersion = "7.0"
