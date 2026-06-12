@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
     id 'org.openjfx.javafxplugin' version '0.0.13'
     id 'application'
 }
@@ -9,6 +10,25 @@ version = '3.0'
 
 def javafxversion = "17.0.10"
 def ptfVersion = "7.0"
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = "cardlearning"
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri ("https://maven.pkg.github.com/TechnoMastery/PotoFlux-cardLearning")
+            credentials {
+                username = project.findProperty("grp.user")
+                password = project.findProperty("grp.key")
+            }
+        }
+    }
+}
 
 repositories {
     mavenCentral()
