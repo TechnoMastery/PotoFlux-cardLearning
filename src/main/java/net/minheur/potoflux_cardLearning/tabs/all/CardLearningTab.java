@@ -3,6 +3,7 @@ package net.minheur.potoflux_cardLearning.tabs.all;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -140,6 +141,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
 
         // bottom - buttons
         HBox bottomPanel = new HBox();
+        bottomPanel.setAlignment(Pos.CENTER);
         backButton = new Button(Translations.get("common:back"));
         flipButton = new Button(Translations.get("common:flip"));
         nextButton = new Button(Translations.get("common:next"));
