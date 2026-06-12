@@ -5,7 +5,7 @@ plugins {
     id 'application'
 }
 
-group = 'net.minheur.potoflux_card_learning'
+group = 'net.minheur'
 version = '3.0'
 
 def javafxversion = "17.0.10"
@@ -23,8 +23,8 @@ publishing {
         maven {
             url = uri ("https://maven.pkg.github.com/TechnoMastery/PotoFlux-cardLearning")
             credentials {
-                username = project.findProperty("grp.user")
-                password = project.findProperty("grp.key")
+                username = project.findProperty("gpr.user")
+                password = project.findProperty("gpr.key")
             }
         }
     }
