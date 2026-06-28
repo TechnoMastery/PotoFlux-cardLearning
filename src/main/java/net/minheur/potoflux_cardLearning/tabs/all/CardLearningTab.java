@@ -14,6 +14,7 @@ import javafx.stage.FileChooser;
 import net.minheur.potoflux.PotoFlux;
 import net.minheur.potoflux.logger.PtfLogger;
 import net.minheur.potoflux.ui.UiUtils;
+import net.minheur.potoflux.utils.Json;
 import net.minheur.potoflux_cardLearning.utility.Card;
 import net.minheur.potoflux_cardLearning.utility.CardJsonManager;
 import net.minheur.potoflux_cardLearning.utility.CardList;
@@ -823,8 +824,7 @@ public class CardLearningTab extends BaseTab<BorderPane> {
         list.cards = new ArrayList<>(createdCardList);
 
         try {
-            Gson gson = new Gson();
-            Files.writeString(outputFile, gson.toJson(list));
+            Files.writeString(outputFile, Json.GSON.toJson(list));
             PtfLogger.info("List " + listName + " has been saved !", CardLogCategories.CARDS, "create");
             UiUtils.showMessagePane(Translations.get("card_learning:tabs.card.list.saved"));
 
